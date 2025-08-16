@@ -17,7 +17,7 @@
     "unit": "forge test -vvv --match-contract",
     "gas": "forge snapshot",
     "format": "forge fmt src/; forge fmt test/",
-    "lint": "solhint src/**/*.sol",
+    "lint": "solhint src/**/*.sol && eslint .",
     "node": "hardhat node",
     "deploy": "npx hardhat deploy-bundle --network $(network)",
     "deploy:hh": "npx hardhat --network hardhat deploy-bundle",

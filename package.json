@@ -28,13 +28,13 @@
     "url": "https://github.com:dgma/sol-starter/issues"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^5.4.0",
+    "@openzeppelin/contracts": "^5.4.0"
+  },
+  "devDependencies": {
     "hardhat-abi-exporter": "^2.11.0",
     "poseidon-lite": "^0.3.0",
     "poseidon-solidity": "^0.0.5",
-    "snarkjs": "^0.7.5"
-  },
-  "devDependencies": {
+    "snarkjs": "^0.7.5",
     "@dgma/hardhat-sol-bundler": "^0.5.11",
     "@eslint/js": "^9.30.0",
     "@nomicfoundation/hardhat-foundry": "^1.2.0",

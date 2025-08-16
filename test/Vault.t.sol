@@ -64,7 +64,7 @@ contract VautTest is Test {
     );
   }
 
-  function test_computePoseidonHash() public {
+  function test_computePoseidonHash() public view {
     uint256 amount = 1000000000000000000;
     uint256 sValue = 1000000000000000000;
     uint256 hash = vault.computePoseidonHash(amount, sValue);

@@ -92,29 +92,6 @@ sol-starter/
 └── deployment.config.js   # Deployment configuration
 ```
 
-## Configuration
-
-### IDE Setup (VS Code)
-
-For the best development experience, use the [Juan Blanco Solidity Plugin](https://github.com/juanfranblanco/vscode-solidity) with these settings:
-
-```json
-{
-  "solidity.formatter": "forge",
-  "solidity.packageDefaultDependenciesContractsDirectory": "src",
-  "solidity.packageDefaultDependenciesDirectory": ["node_modules", "lib"],
-  "solidity.remappings": [
-    "@std=lib/forge-std/src/",
-    "forge-std/=lib/forge-std/src/",
-    "@openzeppelin/=node_modules/@openzeppelin/",
-    "src=src/"
-  ],
-  "solidity.defaultCompiler": "localNodeModule",
-  "[solidity]": {
-    "editor.defaultFormatter": "JuanBlanco.solidity"
-  }
-}
-```
 
 ### Environment Variables
 

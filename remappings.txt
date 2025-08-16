@@ -1,6 +1,4 @@
 @std=lib/forge-std/src/
 forge-std/=lib/forge-std/src/
-@openzeppelin/=node_modules/@openzeppelin/
+node_modules/=node_modules/
 src=src/
-@poseidon/=node_modules/poseidon-solidity
-@circuits/=circuits/contracts

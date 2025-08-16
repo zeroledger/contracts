@@ -10,7 +10,7 @@ import {
   OutputsOwnersStruct,
 } from "../../typechain-types/src/Vault";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import { ERC2771Forwarder, DepositVerifier, MockERC20, Vault } from "../../typechain-types";
+import { ERC2771Forwarder, MockERC20, DepositVerifier, Vault } from "../../typechain-types";
 
 // Types for better organization
 export interface DepositTestData {

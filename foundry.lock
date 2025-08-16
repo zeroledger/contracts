@@ -1,4 +1,7 @@
 {
+  "circuits": {
+    "rev": "1c321c5ae06889b7222f5349f4143837e415de5c"
+  },
   "lib/forge-std": {
     "tag": {
       "name": "v1.10.0",

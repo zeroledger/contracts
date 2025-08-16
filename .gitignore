@@ -1,0 +1,25 @@
+.vscode/
+.env
+node_modules
+.yarn
+# Hardhat files
+cache/
+out/
+cache_hardhat/
+artifacts/
+.gas-snapshot
+ignition/deployments/**/artifacts
+ignition/deployments/**/build-info
+ignition/deployments/**/journal.*
+ignition/deployments/chain-31337
+
+# TypeChain files
+/typechain
+/typechain-types
+
+# solidity-coverage files
+/coverage
+/coverage.json
+
+build/
+local.deployment-lock.json

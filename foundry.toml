@@ -1,0 +1,20 @@
+[profile.default]
+evm_version = "prague"
+gas_reports = ["*"]
+ignored_warnings_from = ["node_modules", "lib", "circuits"]
+libs = ['lib']
+optimizer = true
+optimizer_runs = 200
+out = 'out'
+solc-version = "0.8.28"
+src = 'src'
+test = 'test'
+
+[fmt]
+bracket_spacing = false
+# the length should be lower than in linter for 1
+line_length = 119
+single_line_statement_blocks = "preserve"
+tab_width = 2
+wrap_comments = true
+# See more config options https://github.com/gakonst/foundry/tree/master/config

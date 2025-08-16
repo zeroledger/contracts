@@ -1,0 +1,60 @@
+{
+  "name": "contracts",
+  "version": "0.1.0",
+  "description": "Zeroledger contracts",
+  "author": "Zeroledger",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com:zeroledger/contracts.git"
+  },
+  "scripts": {
+    "clean": "forge clean; rm -rf node_modules; rm .env",
+    "compile": "hardhat compile",
+    "int": "hardhat test",
+    "test": "forge test -vvv; hardhat test",
+    "unit": "forge test -vvv",
+    "unit:c": "forge test -vvv --match-contract",
+    "gas": "forge snapshot",
+    "format": "forge fmt src/; forge fmt test/",
+    "lint": "solhint src/**/*.sol && eslint .",
+    "node": "hardhat node",
+    "deploy": "hardhat run scripts/deploy.ts --network",
+    "abi": "hardhat export-abi",
+    "prepareFeesParams": "hardhat run scripts/protocolManager/prepareFeesParams.ts --network"
+  },
+  "bugs": {
+    "url": "https://github.com:zeroledger/contracts/issues"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.4.0",
+    "@openzeppelin/contracts-upgradeable": "^5.4.0",
+    "solady": "^0.1.26"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.30.0",
+    "@nomicfoundation/hardhat-foundry": "^1.2.0",
+    "@nomicfoundation/hardhat-toolbox": "^6.1.0",
+    "@openzeppelin/hardhat-upgrades": "^3.9.1",
+    "@types/chai": "^4.3.16",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^24.3.0",
+    "@types/snarkjs": "^0.7.9",
+    "@typescript-eslint/eslint-plugin": "^8.35.1",
+    "@typescript-eslint/parser": "^8.35.1",
+    "dotenv": "^17.2.1",
+    "eslint": "^9.30.0",
+    "ethers": "^6.15.0",
+    "hardhat": "^2.22.19",
+    "hardhat-abi-exporter": "^2.11.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.5",
+    "poseidon-lite": "^0.3.0",
+    "poseidon-solidity": "^0.0.5",
+    "prettier": "^3.6.2",
+    "snarkjs": "^0.7.5",
+    "solc": "^0.8.30",
+    "solhint": "^6.0.0",
+    "solidity-coverage": "^0.8.16"
+  }
+}

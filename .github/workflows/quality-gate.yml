@@ -1,0 +1,59 @@
+name: Quality Gate
+on:
+  push:
+
+concurrency:
+  group: quality-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: npm run lint
+
+  check-deploy:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          token: ${{ secrets.CICROM_CI_PAT }}
+      - uses: ./.github/actions/setup
+        with:
+          foundry: true
+      - run: npm run compile
+      - run: npm run deploy hardhat
+
+  integration-test:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          token: ${{ secrets.CICROM_CI_PAT }}
+      - uses: ./.github/actions/setup
+        with:
+          foundry: true
+      - run: npm run int
+
+  unit-test:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          token: ${{ secrets.CICROM_CI_PAT }}
+      - uses: ./.github/actions/setup
+        with:
+          foundry: true
+      - run: npm run unit

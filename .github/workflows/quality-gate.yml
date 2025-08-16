@@ -24,6 +24,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+          token: ${{ secrets.CICROM_CI_PAT }}
       - uses: ./.github/actions/setup
       - run: npm run compile
       - run: npm run deploy:hh

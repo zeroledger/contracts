@@ -1,58 +1,70 @@
-# Sol Starter Template
+# ZeroLedger Contracts
 
-[![Quality Gate](https://github.com/dgma/sol-starter/actions/workflows/quality-gate.yml/badge.svg)](https://github.com/dgma/sol-starter/actions/workflows/quality-gate.yml)
+[![Quality Gate](https://github.com/zeroledger/contracts/actions/workflows/quality-gate.yml/badge.svg)](https://github.com/zeroledger/contracts/actions/workflows/quality-gate.yml)
 
-A comprehensive Solidity development template that combines Foundry and Hardhat for optimal smart contract development experience.
+A privacy-preserving ERC20 token vault system using zero-knowledge proofs for confidential transactions on Ethereum and compatible blockchains.
 
-## Features
+## Overview
 
-- **Dual Testing Framework**: Foundry for fast unit tests and Hardhat for integration tests
-- **Modern Tooling**: Latest versions of Foundry, Hardhat, and OpenZeppelin contracts
-- **Code Quality**: Pre-configured formatting, linting, and pre-commit hooks
-- **Multi-Network Support**: Ready-to-use configurations for multiple testnets
-- **Deployment Ready**: Automated deployment scripts with hardhat-sol-bundler
-- **Gas Optimization**: Built-in gas reporting and optimization settings
+ZeroLedger enables private ERC20 token transfers by using cryptographic commitments and zero-knowledge proofs. Users can deposit, spend, and withdraw tokens while maintaining transaction privacy through the use of Circom circuits and PLONK proving system.
+
+## Key Features
+
+- **🔒 Private Deposits**: Deposit tokens with cryptographic commitments using Poseidon hashes
+- **🔄 Confidential Spends**: Transfer tokens between commitments using ZK proofs without revealing amounts
+- **📊 Multiple Input/Output Support**: Flexible transaction structures supporting various combinations (1-1, 1-2, 1-3, 2-1, 2-2, 2-3, 3-1, 3-2, 16-1)
+- **💰 Fee Support**: Configurable fees for transactions with dedicated fee recipients
+- **🔐 Metadata Encryption**: Optional encrypted metadata for commitments
+- **⚡ PLONK Proving System**: Efficient zero-knowledge proof generation and verification
+- **🌐 Multi-Network Support**: Deployable on Ethereum and compatible L2 networks
+- **🛡️ Security**: Built with OpenZeppelin contracts and comprehensive testing
+
+## Architecture
+
+### Smart Contracts
+- **Vault.sol**: Main contract managing deposits, spends, and withdrawals
+- **Verifiers.sol**: ZK proof verification contracts for all circuit types
+- **MockERC20.sol**: Test token for development and testing
+
+### Zero-Knowledge Circuits
+- **Deposit Circuit**: Validates 3 input commitments sum to total deposit amount
+- **Spend Circuits**: Multiple variants supporting different input/output combinations:
+  - `spend_11`: 1 input, 1 output
+  - `spend_12`: 1 input, 2 outputs
+  - `spend_13`: 1 input, 3 outputs
+  - `spend_21`: 2 inputs, 1 output
+  - `spend_22`: 2 inputs, 2 outputs
+  - `spend_23`: 2 inputs, 3 outputs
+  - `spend_31`: 3 inputs, 1 output
+  - `spend_32`: 3 inputs, 2 outputs
+  - `spend_161`: 16 inputs, 1 output
 
 ## Requirements
 
 - [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
-  - You'll know you've done it right if you can run `git --version`
 - [Node.js](https://nodejs.org/en) (v18 or higher)
-- [Foundry / Foundryup](https://github.com/gakonst/foundry) for unit testing and development
+- [Foundry](https://github.com/gakonst/foundry) for unit testing and development
 - [Hardhat](https://hardhat.org/docs) for integration tests & deployment
-- Optional: [Docker](https://www.docker.com/) for containerized development
 
 ## Quick Start
 
 1. **Clone and install dependencies:**
-```sh
-git clone https://github.com/dgma/sol-starter.git
-cd sol-starter
+```bash
+git clone https://github.com/zeroledger/contracts.git
+cd contracts
 npm install
 npx husky install
 ```
 
 2. **Install Foundry dependencies:**
-```sh
+```bash
 forge install foundry-rs/forge-std
 ```
 
 3. **Set up environment variables:**
-```sh
+```bash
 cp .env.example .env
 # Edit .env with your configuration
-```
-
-4. **Run tests:**
-```sh
-# Unit tests with Foundry
-forge test -vvv
-
-# Integration tests with Hardhat
-npm run int
-
-# All tests
-npm run test
 ```
 
 ## Available Scripts
@@ -80,20 +92,27 @@ npm run test
 ## Project Structure
 
 ```
-sol-starter/
+contracts/
 ├── src/                    # Smart contract source files
-├── test/                   # Foundry unit tests
-├── integration/            # Hardhat integration tests
-├── lib/                    # Foundry dependencies
-├── artifacts/              # Hardhat compilation artifacts
-├── cache/                  # Foundry cache
-├── foundry.toml           # Foundry configuration
-├── hardhat.config.js      # Hardhat configuration
-└── deployment.config.js   # Deployment configuration
+│   ├── Vault.sol          # Main vault contract
+│   ├── Vault.types.sol    # Type definitions
+│   ├── Verifiers.sol      # ZK proof verifiers
+│   ├── MockERC20.sol      # Test token
+│   └── Inputs.lib.sol     # Input utilities
+├── circuits/              # Zero-knowledge circuits
+│   ├── circuits/          # Circom circuit definitions
+│   ├── contracts/         # Generated verifier contracts
+│   ├── test/             # Circuit tests
+│   └── utils/            # Circuit utilities
+├── test/                  # Foundry unit tests
+├── integration/           # Hardhat integration tests
+├── abi/                   # Contract ABIs
+├── lib/                   # Foundry dependencies
+├── artifacts/             # Hardhat compilation artifacts
+└── cache/                 # Foundry cache
 ```
 
-
-### Environment Variables
+## Environment Variables
 
 Create a `.env` file with the following variables:
 
@@ -118,6 +137,14 @@ OPSCAN_API_KEY=your_opscan_api_key
 - **Testnets**: Sepolia, Arbitrum Sepolia, Optimism Sepolia
 - **Mainnets**: Configurable via hardhat.config.js
 
+## Security
+
+- **Audited Dependencies**: Uses OpenZeppelin contracts
+- **Reentrancy Protection**: Built-in guards against reentrancy attacks
+- **Access Control**: Proper authorization mechanisms
+- **Zero-Knowledge Proofs**: Cryptographic privacy guarantees
+- **Comprehensive Testing**: Extensive test coverage: In progress  
+
 ## Contributing
 
 1. Fork the repository
@@ -128,9 +155,10 @@ OPSCAN_API_KEY=your_opscan_api_key
 
 ## Resources
 
+- [ZeroLedger Protocol Documentation](https://github.com/zeroledger/protocol)
 - [Foundry Documentation](https://book.getfoundry.sh/)
 - [Hardhat Documentation](https://hardhat.org/docs)
-- [hardhat-sol-bundler Documentation](https://github.com/dgma/hardhat-sol-bundler)
+- [Circom Documentation](https://docs.circom.io/)
 - [OpenZeppelin Contracts](https://docs.openzeppelin.com/contracts/)
 - [Solidity Documentation](https://docs.soliditylang.org/)
 
@@ -142,10 +170,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 If you encounter any issues or have questions:
 
-- Open an [issue](https://github.com/dgma/sol-starter/issues)
-- Check the [documentation](https://github.com/dgma/sol-starter)
+- Open an [issue](https://github.com/zeroledger/contracts/issues)
+- Check the [documentation](https://github.com/zeroledger/protocol)
 - Join our community discussions
 
 ---
 
-**Note**: This is a development template. Always audit your smart contracts before deploying to production networks.
+**Note**: This is experimental software. Always audit your smart contracts before deploying to production networks.

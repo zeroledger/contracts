@@ -24,16 +24,21 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+          path: circuits
           token: ${{ secrets.CICROM_CI_PAT }}
       - uses: ./.github/actions/setup
       - run: npm run compile
       - run: npm run deploy:hh
 
-  # test:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: ./.github/actions/setup
-  #       with:
-  #         foundry: true
-  #     - run: npm run test
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          path: circuits
+          token: ${{ secrets.CICROM_CI_PAT }}
+      - uses: ./.github/actions/setup
+        with:
+          foundry: true
+      - run: npm run test

@@ -1,12 +1,12 @@
 {
-  "name": "sol-starter",
-  "version": "0.4.0-a",
-  "description": "Template to bootstrap solidity project with foundry and hardhat",
-  "author": "Dzmitry Lahunouski",
+  "name": "contracts",
+  "version": "0.1.0-a",
+  "description": "Zeroledger contracts",
+  "author": "Zeroledger",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com:dgma/sol-starter.git"
+    "url": "git+https://github.com:zeroledger/contracts.git"
   },
   "scripts": {
     "clean": "forge clean; rm -rf node_modules; rm .env",
@@ -25,7 +25,7 @@
     "deploy:t": "npx hardhat --network optimismSepolia deploy-bundle"
   },
   "bugs": {
-    "url": "https://github.com:dgma/sol-starter/issues"
+    "url": "https://github.com:zeroledger/contracts/issues"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.4.0"

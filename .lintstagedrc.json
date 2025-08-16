@@ -1,0 +1,12 @@
+{
+  "src/**/*.sol": [
+    "forge fmt",
+    "solhint --fix --noPrompt"
+  ],
+  "test/**/*.sol": [
+    "forge fmt",
+    "solhint --fix --noPrompt"
+  ],
+  "integration/**/*.js": "prettier --write",
+  "deployment-lock.json": "prettier --write"
+}

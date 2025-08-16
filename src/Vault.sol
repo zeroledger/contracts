@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.21;
 
-import {PoseidonT3} from "poseidon-solidity/PoseidonT3.sol";
+import {PoseidonT3} from "@poseidon/PoseidonT3.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {DepositVerifier} from "../circuits/contracts/DepositVerifier.sol";
-import {Spend11Verifier} from "../circuits/contracts/Spend11Verifier.sol";
-import {Spend12Verifier} from "../circuits/contracts/Spend12Verifier.sol";
-import {Spend13Verifier} from "../circuits/contracts/Spend13Verifier.sol";
-import {Spend21Verifier} from "../circuits/contracts/Spend21Verifier.sol";
-import {Spend22Verifier} from "../circuits/contracts/Spend22Verifier.sol";
-import {Spend23Verifier} from "../circuits/contracts/Spend23Verifier.sol";
-import {Spend31Verifier} from "../circuits/contracts/Spend31Verifier.sol";
-import {Spend32Verifier} from "../circuits/contracts/Spend32Verifier.sol";
-import {Spend161Verifier} from "../circuits/contracts/Spend161Verifier.sol";
+import {DepositVerifier} from "@circuits/DepositVerifier.sol";
+import {Spend11Verifier} from "@circuits/Spend11Verifier.sol";
+import {Spend12Verifier} from "@circuits/Spend12Verifier.sol";
+import {Spend13Verifier} from "@circuits/Spend13Verifier.sol";
+import {Spend21Verifier} from "@circuits/Spend21Verifier.sol";
+import {Spend22Verifier} from "@circuits/Spend22Verifier.sol";
+import {Spend23Verifier} from "@circuits/Spend23Verifier.sol";
+import {Spend31Verifier} from "@circuits/Spend31Verifier.sol";
+import {Spend32Verifier} from "@circuits/Spend32Verifier.sol";
+import {Spend161Verifier} from "@circuits/Spend161Verifier.sol";
 import {
   Commitment,
   DepositCommitmentParams,

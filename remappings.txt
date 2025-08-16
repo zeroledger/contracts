@@ -2,3 +2,5 @@
 forge-std/=lib/forge-std/src/
 @openzeppelin/=node_modules/@openzeppelin/
 src=src/
+@poseidon/=node_modules/poseidon-solidity
+@circuits/=circuits/contracts

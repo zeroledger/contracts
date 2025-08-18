@@ -4,6 +4,9 @@ pragma solidity ^0.8.0;
 import {Transaction, DepositCommitmentParams, PublicOutput} from "./Vault.types.sol";
 
 library InputsLib {
+  // poseidon hash of "[0, keccak256("ZeroLedgerSharedInput")]"
+  uint256 public constant SHARED_INPUT = 16345784317541686154474118656352090725662212393131703302641232392927716723243;
+
   function computePublicOutputAmount(PublicOutput[] calldata publicOutputs)
     internal
     pure

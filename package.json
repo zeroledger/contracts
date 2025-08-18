@@ -1,6 +1,6 @@
 {
   "name": "contracts",
-  "version": "0.1.0-a",
+  "version": "0.0.1-b",
   "description": "Zeroledger contracts",
   "author": "Zeroledger",
   "license": "MIT",
@@ -22,7 +22,7 @@
     "deploy": "npx hardhat deploy-bundle --network $(network)",
     "deploy:hh": "npx hardhat --network hardhat deploy-bundle",
     "deploy:localhost": "npx hardhat --network localhost deploy-bundle",
-    "deploy:t": "npx hardhat --network optimismSepolia deploy-bundle"
+    "deploy:t": "npx hardhat --network opSepolia deploy-bundle"
   },
   "bugs": {
     "url": "https://github.com:zeroledger/contracts/issues"

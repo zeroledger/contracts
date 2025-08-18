@@ -77,8 +77,6 @@ contract Vault is ReentrancyGuard, ERC2771Context {
   // Spend161Verifier contract for ZK proof validation
   Spend161Verifier public immutable spend161Verifier;
 
-  uint256 public immutable TEMPLATE_INPUT = computePoseidonHash(0, uint256(bytes32(bytes20(address(this)))));
-
   // Events
   event TokenDeposited(address indexed user, address indexed token, uint256 total_deposit_amount, uint256 fee);
   event CommitmentCreated(address indexed owner, address indexed token, uint256 poseidonHash, bytes metadata);
@@ -119,29 +117,23 @@ contract Vault is ReentrancyGuard, ERC2771Context {
 
   /**
    * @dev Deposit tokens with commitments and ZK proof validation
-   * @param depositParams The deposit parameters
-   * @param proof ZK proof bytes
    */
   function deposit(DepositParams calldata depositParams, uint256[24] calldata proof) external nonReentrant {
     address token = depositParams.token;
     uint256 total_deposit_amount = depositParams.total_deposit_amount;
     DepositCommitmentParams[3] calldata depositCommitmentParams = depositParams.depositCommitmentParams;
-    uint256 fee = depositParams.fee;
-    address feeRecipient = depositParams.feeRecipient;
     require(token != address(0), "Vault: Invalid token address");
     require(total_deposit_amount > 0, "Vault: Amount must be greater than 0");
-
-    // Verify ZK proof
-    bool isValidProof =
-      depositVerifier.verify(proof, InputsLib.depositInputs(depositCommitmentParams, total_deposit_amount));
-    require(isValidProof, "Vault: Invalid ZK proof");
+    require(
+      depositVerifier.verify(proof, InputsLib.depositInputs(depositCommitmentParams, total_deposit_amount)),
+      "Vault: Invalid ZK proof"
+    );
 
     // Check that no commitment has been used before and
     // assign commitments to addresses before external call
     for (uint256 i = 0; i < depositCommitmentParams.length; i++) {
       uint256 poseidonHash = depositCommitmentParams[i].poseidonHash;
-      // skip template input
-      if (poseidonHash == TEMPLATE_INPUT) {
+      if (poseidonHash == InputsLib.SHARED_INPUT) {
         continue;
       }
       require(commitmentsMap[token][poseidonHash].owner == address(0), "Vault: Commitment already used");
@@ -151,10 +143,10 @@ contract Vault is ReentrancyGuard, ERC2771Context {
       );
     }
 
-    // Transfer tokens from user to contract (external call)
+    uint256 fee = depositParams.fee;
     IERC20(token).transferFrom(_msgSender(), address(this), total_deposit_amount);
     if (fee > 0) {
-      IERC20(token).transferFrom(_msgSender(), feeRecipient, fee);
+      IERC20(token).transferFrom(_msgSender(), depositParams.feeRecipient, fee);
     }
     emit TokenDeposited(_msgSender(), token, total_deposit_amount, fee);
   }
@@ -165,7 +157,7 @@ contract Vault is ReentrancyGuard, ERC2771Context {
   function _validateInputIndexes(Transaction calldata transaction) internal view {
     for (uint256 i = 0; i < transaction.inputsPoseidonHashes.length; i++) {
       uint256 poseidonHash = transaction.inputsPoseidonHashes[i];
-      if (poseidonHash == TEMPLATE_INPUT) {
+      if (poseidonHash == InputsLib.SHARED_INPUT) {
         continue;
       }
       require(
@@ -180,7 +172,7 @@ contract Vault is ReentrancyGuard, ERC2771Context {
   function _deleteInputCommitments(Transaction calldata transaction) internal {
     for (uint256 i = 0; i < transaction.inputsPoseidonHashes.length; i++) {
       uint256 inputHash = transaction.inputsPoseidonHashes[i];
-      if (inputHash == TEMPLATE_INPUT) {
+      if (inputHash == InputsLib.SHARED_INPUT) {
         continue;
       }
       address inputOwner = commitmentsMap[transaction.token][inputHash].owner;
@@ -200,8 +192,7 @@ contract Vault is ReentrancyGuard, ERC2771Context {
       for (uint256 j = 0; j < outputWitness.indexes.length; j++) {
         uint8 outputIndex = outputWitness.indexes[j];
         uint256 outputHash = transaction.outputsPoseidonHashes[outputIndex];
-        // skip template input
-        if (outputHash == TEMPLATE_INPUT) {
+        if (outputHash == InputsLib.SHARED_INPUT) {
           continue;
         }
         commitmentsMap[transaction.token][outputHash] = Commitment({owner: outputOwner, locked: false});
@@ -212,8 +203,6 @@ contract Vault is ReentrancyGuard, ERC2771Context {
 
   /**
    * @dev Spend commitments by creating new ones (supports multiple inputs and outputs)
-   * @param transaction The transaction data
-   * @param proof ZK proof bytes
    */
   // solhint-disable-next-line code-complexity
   function spend(Transaction calldata transaction, uint256[24] calldata proof) external nonReentrant {
@@ -221,10 +210,8 @@ contract Vault is ReentrancyGuard, ERC2771Context {
     require(transaction.inputsPoseidonHashes.length > 0, "Vault: No inputs provided");
     require(transaction.outputsPoseidonHashes.length > 0, "Vault: No outputs provided");
 
-    // Validate indexes using separate methods to reduce stack size
     _validateInputIndexes(transaction);
 
-    // Verify ZK proof based on input/output combination
     bool isValidProof = false;
     if (transaction.inputsPoseidonHashes.length == 1 && transaction.outputsPoseidonHashes.length == 1) {
       isValidProof = spend11Verifier.verify(proof, InputsLib.fillSpend3Inputs(transaction));
@@ -252,20 +239,16 @@ contract Vault is ReentrancyGuard, ERC2771Context {
 
     require(isValidProof, "Vault: Invalid ZK proof");
 
-    // Delete all input commitments from storage (saves gas)
     _deleteInputCommitments(transaction);
 
-    // Create new output commitments using the indexes from output witnesses
     _createOutputCommitments(transaction);
 
-    // Transfer fee to fee recipient
     for (uint8 i = 0; i < transaction.publicOutputs.length; i++) {
       if (transaction.publicOutputs[i].amount > 0) {
         IERC20(transaction.token).transfer(transaction.publicOutputs[i].owner, transaction.publicOutputs[i].amount);
       }
     }
 
-    // Emit single transaction event for the atomic operation
     emit TransactionSpent(
       _msgSender(),
       transaction.token,
@@ -277,35 +260,27 @@ contract Vault is ReentrancyGuard, ERC2771Context {
 
   /**
    * @dev Removes commitment by providing amount and secret
-   * @param token The ERC20 token address
-   * @param item The decoded commitment
    */
   function redeemCommitment(address token, WithdrawItem calldata item) private {
     require(token != address(0), "Vault: Invalid token address");
     require(item.amount > 0, "Vault: Amount must be greater than 0");
 
-    // Compute the Poseidon hash on-chain
     uint256 poseidonHash = computePoseidonHash(item.amount, item.sValue);
-    if (poseidonHash == TEMPLATE_INPUT) {
+    if (poseidonHash == InputsLib.SHARED_INPUT) {
       return;
     }
 
-    // Get the commitment
     Commitment storage commitment = commitmentsMap[token][poseidonHash];
     require(commitment.owner != address(0), "Vault: Commitment not found");
     require(commitment.owner == _msgSender(), "Vault: Only assigned address can withdraw");
 
-    // Delete the commitment from storage (saves gas)
     delete commitmentsMap[token][poseidonHash];
 
-    // Emit withdrawal event
     emit CommitmentRemoved(_msgSender(), token, poseidonHash);
   }
 
   /**
    * @dev Withdraw multiple commitments in a single transaction
-   * @param token The ERC20 token address
-   * @param items The withdrawal items
    */
   function withdraw(address token, WithdrawItem[] calldata items, address recipient, uint256 fee, address feeRecipient)
     external
@@ -316,7 +291,6 @@ contract Vault is ReentrancyGuard, ERC2771Context {
       redeemCommitment(token, items[i]);
       total += items[i].amount;
     }
-    // Transfer tokens to the owner
     IERC20(token).transfer(recipient, total - fee);
     if (fee > 0) {
       IERC20(token).transfer(feeRecipient, fee);
@@ -326,9 +300,6 @@ contract Vault is ReentrancyGuard, ERC2771Context {
 
   /**
    * @dev Compute Poseidon hash of amount and sValue on-chain
-   * @param amount The amount field element
-   * @param sValue The entropy field element
-   * @return The computed Poseidon hash
    */
   function computePoseidonHash(uint256 amount, uint256 sValue) public pure returns (uint256) {
     return PoseidonT3.hash([amount, sValue]);
@@ -336,10 +307,6 @@ contract Vault is ReentrancyGuard, ERC2771Context {
 
   /**
    * @dev Get commitment details for a given token and poseidon hash
-   * @param token The ERC20 token address
-   * @param poseidonHash The poseidon hash to look up
-   * @return owner The owner of the commitment
-   * @return locked Whether the commitment has been locked
    */
   function getCommitment(address token, uint256 poseidonHash) external view returns (address owner, bool locked) {
     Commitment memory commitment = commitmentsMap[token][poseidonHash];

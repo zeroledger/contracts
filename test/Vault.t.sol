@@ -136,6 +136,19 @@ contract VaultTest is Test {
     assertTrue(hash != 0);
   }
 
+  // ============ TEMPLATE_INPUT Tests ============
+  function test_TEMPLATE_INPUT() public view {
+    uint256 hash = vault.TEMPLATE_INPUT();
+    // TEMPLATE_INPUT is computePoseidonHash(0, uint256(bytes32(bytes20(address(this)))))
+    // We can't predict the exact value since it depends on the contract address
+    // So we just verify it's not zero and matches the expected computation
+    assertTrue(hash != 0, "TEMPLATE_INPUT should not be zero");
+    
+    // Verify it matches the expected computation
+    uint256 expectedHash = vault.computePoseidonHash(0, uint256(bytes32(bytes20(address(vault)))));
+    assertEq(hash, expectedHash, "TEMPLATE_INPUT should match the computed hash");
+  }
+
   // ============ Deposit Tests ============
 
   function test_deposit_success() public {

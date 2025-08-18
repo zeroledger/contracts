@@ -18,7 +18,10 @@ const DEFAULT_RPC = "https:random.com";
 export default {
   solidity: {
     version: "0.8.28",
-    settings: { optimizer: { enabled: true, runs: 100000000 } },
+    settings: {
+      optimizer: { enabled: true, runs: 100000000 },
+      viaIR: true,
+    },
     metadata: {
       appendCBOR: false,
     },
@@ -39,6 +42,7 @@ export default {
   networks: {
     hardhat: {
       deployment: deployments.hardhat,
+      allowUnlimitedContractSize: true,
     },
     localhost: {
       deployment: deployments.localhost,

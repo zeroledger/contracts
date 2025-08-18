@@ -8,6 +8,7 @@ out = 'out'
 solc-version = "0.8.28"
 src = 'src'
 test = 'test'
+via_ir = true
 
 [fmt]
 bracket_spacing = false

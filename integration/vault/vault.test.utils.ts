@@ -148,6 +148,14 @@ export async function deployVaultFixture(): Promise<TestFixture> {
   const spend32Verifier = await Spend32VerifierFactory.deploy();
   await spend32Verifier.waitForDeployment();
 
+  const Spend33VerifierFactory = await ethers.getContractFactory("Spend33Verifier");
+  const spend33Verifier = await Spend33VerifierFactory.deploy();
+  await spend33Verifier.waitForDeployment();
+
+  const Spend81VerifierFactory = await ethers.getContractFactory("Spend81Verifier");
+  const spend81Verifier = await Spend81VerifierFactory.deploy();
+  await spend81Verifier.waitForDeployment();
+
   const Spend161VerifierFactory = await ethers.getContractFactory("Spend161Verifier");
   const spend161Verifier = await Spend161VerifierFactory.deploy();
   await spend161Verifier.waitForDeployment();
@@ -174,6 +182,8 @@ export async function deployVaultFixture(): Promise<TestFixture> {
     await spend23Verifier.getAddress(),
     await spend31Verifier.getAddress(),
     await spend32Verifier.getAddress(),
+    await spend33Verifier.getAddress(),
+    await spend81Verifier.getAddress(),
     await spend161Verifier.getAddress(),
     await baseForwarder.getAddress(),
   );

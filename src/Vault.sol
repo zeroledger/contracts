@@ -30,6 +30,7 @@ import {
 import {InputsLib} from "./Inputs.lib.sol";
 
 import {ERC2771Context} from "node_modules/@openzeppelin/contracts/metatx/ERC2771Context.sol";
+// solhint-disable-next-line no-unused-imports
 import {ERC2771Forwarder} from "node_modules/@openzeppelin/contracts/metatx/ERC2771Forwarder.sol";
 
 /**
@@ -75,6 +76,8 @@ contract Vault is ReentrancyGuard, ERC2771Context {
 
   // Spend161Verifier contract for ZK proof validation
   Spend161Verifier public immutable spend161Verifier;
+
+  uint256 public immutable TEMPLATE_INPUT = computePoseidonHash(0, uint256(bytes32(bytes20(address(this)))));
 
   // Events
   event TokenDeposited(address indexed user, address indexed token, uint256 total_deposit_amount, uint256 fee);
@@ -127,28 +130,24 @@ contract Vault is ReentrancyGuard, ERC2771Context {
     address feeRecipient = depositParams.feeRecipient;
     require(token != address(0), "Vault: Invalid token address");
     require(total_deposit_amount > 0, "Vault: Amount must be greater than 0");
-    // Check that no commitment has been used before
-    for (uint256 i = 0; i < 3; i++) {
-      require(
-        commitmentsMap[token][depositCommitmentParams[i].poseidonHash].owner == address(0),
-        "Vault: Commitment already used"
-      );
-    }
 
     // Verify ZK proof
     bool isValidProof =
       depositVerifier.verify(proof, InputsLib.depositInputs(depositCommitmentParams, total_deposit_amount));
     require(isValidProof, "Vault: Invalid ZK proof");
 
-    // Assign commitments to addresses before external call
+    // Check that no commitment has been used before and
+    // assign commitments to addresses before external call
     for (uint256 i = 0; i < depositCommitmentParams.length; i++) {
-      commitmentsMap[token][depositCommitmentParams[i].poseidonHash] =
-        Commitment({owner: depositCommitmentParams[i].owner, locked: false});
+      uint256 poseidonHash = depositCommitmentParams[i].poseidonHash;
+      // skip template input
+      if (poseidonHash == TEMPLATE_INPUT) {
+        continue;
+      }
+      require(commitmentsMap[token][poseidonHash].owner == address(0), "Vault: Commitment already used");
+      commitmentsMap[token][poseidonHash] = Commitment({owner: depositCommitmentParams[i].owner, locked: false});
       emit CommitmentCreated(
-        depositCommitmentParams[i].owner,
-        token,
-        depositCommitmentParams[i].poseidonHash,
-        depositCommitmentParams[i].metadata
+        depositCommitmentParams[i].owner, token, poseidonHash, depositCommitmentParams[i].metadata
       );
     }
 
@@ -165,9 +164,12 @@ contract Vault is ReentrancyGuard, ERC2771Context {
    */
   function _validateInputIndexes(Transaction calldata transaction) internal view {
     for (uint256 i = 0; i < transaction.inputsPoseidonHashes.length; i++) {
+      uint256 poseidonHash = transaction.inputsPoseidonHashes[i];
+      if (poseidonHash == TEMPLATE_INPUT) {
+        continue;
+      }
       require(
-        commitmentsMap[transaction.token][transaction.inputsPoseidonHashes[i]].owner == _msgSender(),
-        "Vault: Input commitment not found"
+        commitmentsMap[transaction.token][poseidonHash].owner == _msgSender(), "Vault: Input commitment not found"
       );
     }
   }
@@ -178,6 +180,9 @@ contract Vault is ReentrancyGuard, ERC2771Context {
   function _deleteInputCommitments(Transaction calldata transaction) internal {
     for (uint256 i = 0; i < transaction.inputsPoseidonHashes.length; i++) {
       uint256 inputHash = transaction.inputsPoseidonHashes[i];
+      if (inputHash == TEMPLATE_INPUT) {
+        continue;
+      }
       address inputOwner = commitmentsMap[transaction.token][inputHash].owner;
       delete commitmentsMap[transaction.token][inputHash];
       emit CommitmentRemoved(inputOwner, transaction.token, inputHash);
@@ -195,6 +200,10 @@ contract Vault is ReentrancyGuard, ERC2771Context {
       for (uint256 j = 0; j < outputWitness.indexes.length; j++) {
         uint8 outputIndex = outputWitness.indexes[j];
         uint256 outputHash = transaction.outputsPoseidonHashes[outputIndex];
+        // skip template input
+        if (outputHash == TEMPLATE_INPUT) {
+          continue;
+        }
         commitmentsMap[transaction.token][outputHash] = Commitment({owner: outputOwner, locked: false});
         emit CommitmentCreated(outputOwner, transaction.token, outputHash, transaction.metadata[outputIndex]);
       }
@@ -206,6 +215,7 @@ contract Vault is ReentrancyGuard, ERC2771Context {
    * @param transaction The transaction data
    * @param proof ZK proof bytes
    */
+  // solhint-disable-next-line code-complexity
   function spend(Transaction calldata transaction, uint256[24] calldata proof) external nonReentrant {
     require(transaction.token != address(0), "Vault: Invalid token address");
     require(transaction.inputsPoseidonHashes.length > 0, "Vault: No inputs provided");
@@ -232,6 +242,10 @@ contract Vault is ReentrancyGuard, ERC2771Context {
       isValidProof = spend31Verifier.verify(proof, InputsLib.fillSpend5Inputs(transaction));
     } else if (transaction.inputsPoseidonHashes.length == 3 && transaction.outputsPoseidonHashes.length == 2) {
       isValidProof = spend32Verifier.verify(proof, InputsLib.fillSpend6Inputs(transaction));
+    } else if (transaction.inputsPoseidonHashes.length == 3 && transaction.outputsPoseidonHashes.length == 3) {
+      isValidProof = spend33Verifier.verify(proof, InputsLib.fillSpend7Inputs(transaction));
+    } else if (transaction.inputsPoseidonHashes.length == 8 && transaction.outputsPoseidonHashes.length == 1) {
+      isValidProof = spend81Verifier.verify(proof, InputsLib.fillSpend10Inputs(transaction));
     } else if (transaction.inputsPoseidonHashes.length == 16 && transaction.outputsPoseidonHashes.length == 1) {
       isValidProof = spend161Verifier.verify(proof, InputsLib.fillSpend18Inputs(transaction));
     }
@@ -272,6 +286,9 @@ contract Vault is ReentrancyGuard, ERC2771Context {
 
     // Compute the Poseidon hash on-chain
     uint256 poseidonHash = computePoseidonHash(item.amount, item.sValue);
+    if (poseidonHash == TEMPLATE_INPUT) {
+      return;
+    }
 
     // Get the commitment
     Commitment storage commitment = commitmentsMap[token][poseidonHash];

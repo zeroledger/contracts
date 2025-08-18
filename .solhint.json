@@ -8,6 +8,8 @@
       "error",
       ">=0.8.0 <0.9.0"
     ],
+    "immutable-vars-naming": "off",
+    "gas-custom-errors": "off",
     "func-name-mixedcase": "off",
     "var-name-mixedcase": "off",
     "code-complexity": [

@@ -12,4 +12,6 @@ import {Spend22Verifier} from "circuits/contracts/Spend22Verifier.sol";
 import {Spend23Verifier} from "circuits/contracts/Spend23Verifier.sol";
 import {Spend31Verifier} from "circuits/contracts/Spend31Verifier.sol";
 import {Spend32Verifier} from "circuits/contracts/Spend32Verifier.sol";
+import {Spend33Verifier} from "circuits/contracts/Spend33Verifier.sol";
+import {Spend81Verifier} from "circuits/contracts/Spend81Verifier.sol";
 import {Spend161Verifier} from "circuits/contracts/Spend161Verifier.sol";

@@ -13,6 +13,8 @@ import {
   Spend23Verifier,
   Spend31Verifier,
   Spend32Verifier,
+  Spend33Verifier,
+  Spend81Verifier,
   Spend161Verifier
 } from "./Verifiers.sol";
 import {PoseidonT3} from "node_modules/poseidon-solidity/PoseidonT3.sol";
@@ -65,6 +67,12 @@ contract Vault is ReentrancyGuard, ERC2771Context {
   // Spend32Verifier contract for ZK proof validation
   Spend32Verifier public immutable spend32Verifier;
 
+  // Spend33Verifier contract for ZK proof validation
+  Spend33Verifier public immutable spend33Verifier;
+
+  // Spend81Verifier contract for ZK proof validation
+  Spend81Verifier public immutable spend81Verifier;
+
   // Spend161Verifier contract for ZK proof validation
   Spend161Verifier public immutable spend161Verifier;
 
@@ -87,6 +95,8 @@ contract Vault is ReentrancyGuard, ERC2771Context {
     address _spend23Verifier,
     address _spend31Verifier,
     address _spend32Verifier,
+    address _spend33Verifier,
+    address _spend81Verifier,
     address _spend161Verifier,
     address _trustedForwarder
   ) ERC2771Context(_trustedForwarder) {
@@ -99,6 +109,8 @@ contract Vault is ReentrancyGuard, ERC2771Context {
     spend23Verifier = Spend23Verifier(_spend23Verifier);
     spend31Verifier = Spend31Verifier(_spend31Verifier);
     spend32Verifier = Spend32Verifier(_spend32Verifier);
+    spend33Verifier = Spend33Verifier(_spend33Verifier);
+    spend81Verifier = Spend81Verifier(_spend81Verifier);
     spend161Verifier = Spend161Verifier(_spend161Verifier);
   }
 

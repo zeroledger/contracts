@@ -18,6 +18,8 @@ import {
   Spend23Verifier,
   Spend31Verifier,
   Spend32Verifier,
+  Spend33Verifier,
+  Spend81Verifier,
   Spend161Verifier,
   ERC2771Forwarder
 } from "src/Vault.sol";
@@ -55,6 +57,8 @@ contract VaultTest is Test {
   Spend23Verifier private spend23Verifier;
   Spend31Verifier private spend31Verifier;
   Spend32Verifier private spend32Verifier;
+  Spend33Verifier private spend33Verifier;
+  Spend81Verifier private spend81Verifier;
   Spend161Verifier private spend161Verifier;
   ERC2771Forwarder private zeroLedgerForwarder;
   MockERC20 private mockToken;
@@ -74,6 +78,8 @@ contract VaultTest is Test {
     spend23Verifier = new Spend23Verifier();
     spend31Verifier = new Spend31Verifier();
     spend32Verifier = new Spend32Verifier();
+    spend33Verifier = new Spend33Verifier();
+    spend81Verifier = new Spend81Verifier();
     spend161Verifier = new Spend161Verifier();
     zeroLedgerForwarder = new ERC2771Forwarder("ZeroLedgerForwarder");
 
@@ -87,6 +93,8 @@ contract VaultTest is Test {
       address(spend23Verifier),
       address(spend31Verifier),
       address(spend32Verifier),
+      address(spend33Verifier),
+      address(spend81Verifier),
       address(spend161Verifier),
       address(zeroLedgerForwarder)
     );

@@ -18,6 +18,8 @@ const config = {
   Spend23Verifier: {},
   Spend31Verifier: {},
   Spend32Verifier: {},
+  Spend33Verifier: {},
+  Spend81Verifier: {},
   Spend161Verifier: {},
   Vault: {
     options: {
@@ -36,6 +38,8 @@ const config = {
       dynamicAddress("Spend23Verifier"),
       dynamicAddress("Spend31Verifier"),
       dynamicAddress("Spend32Verifier"),
+      dynamicAddress("Spend33Verifier"),
+      dynamicAddress("Spend81Verifier"),
       dynamicAddress("Spend161Verifier"),
       dynamicAddress("ERC2771Forwarder"),
     ],

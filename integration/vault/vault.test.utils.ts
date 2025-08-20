@@ -164,15 +164,8 @@ export async function deployVaultFixture(): Promise<TestFixture> {
   const baseForwarder = await ForwarderFactory.deploy("BaseForwarder");
   await baseForwarder.waitForDeployment();
 
-  // Deploy Vault
-  const VaultFactory = await ethers.getContractFactory("Vault", {
-    libraries: {
-      PoseidonT3: await poseidonT3.getAddress(),
-      InputsLib: await inputsLib.getAddress(),
-    },
-  });
-
-  const vault = await VaultFactory.deploy(
+  const VerifiersFactory = await ethers.getContractFactory("Verifiers");
+  const verifiers = await VerifiersFactory.deploy(
     await depositVerifier.getAddress(),
     await spend11Verifier.getAddress(),
     await spend12Verifier.getAddress(),
@@ -185,8 +178,18 @@ export async function deployVaultFixture(): Promise<TestFixture> {
     await spend33Verifier.getAddress(),
     await spend81Verifier.getAddress(),
     await spend161Verifier.getAddress(),
-    await baseForwarder.getAddress(),
   );
+  await verifiers.waitForDeployment();
+
+  // Deploy Vault
+  const VaultFactory = await ethers.getContractFactory("Vault", {
+    libraries: {
+      PoseidonT3: await poseidonT3.getAddress(),
+      InputsLib: await inputsLib.getAddress(),
+    },
+  });
+
+  const vault = await VaultFactory.deploy(await verifiers.getAddress(), await baseForwarder.getAddress());
   await vault.waitForDeployment();
 
   // Mint tokens to users for testing

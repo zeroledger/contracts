@@ -20,7 +20,6 @@ export default {
     version: "0.8.28",
     settings: {
       optimizer: { enabled: true, runs: 100000000 },
-      viaIR: true,
     },
     metadata: {
       appendCBOR: false,

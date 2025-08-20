@@ -8,7 +8,6 @@ pragma solidity ^0.8.20;
 import "@std/Test.sol";
 
 import {
-  Vault,
   DepositVerifier,
   Spend11Verifier,
   Spend12Verifier,
@@ -21,8 +20,9 @@ import {
   Spend33Verifier,
   Spend81Verifier,
   Spend161Verifier,
-  ERC2771Forwarder
-} from "src/Vault.sol";
+  Verifiers
+} from "src/Verifiers.sol";
+import {Vault, ERC2771Forwarder} from "src/Vault.sol";
 import {MockERC20} from "src/MockERC20.sol";
 import {
   DepositParams,
@@ -82,8 +82,7 @@ contract VaultTest is Test {
     spend81Verifier = new Spend81Verifier();
     spend161Verifier = new Spend161Verifier();
     zeroLedgerForwarder = new ERC2771Forwarder("ZeroLedgerForwarder");
-
-    vault = new Vault(
+    Verifiers verifiers = new Verifiers(
       address(depositVerifier),
       address(spend11Verifier),
       address(spend12Verifier),
@@ -95,7 +94,11 @@ contract VaultTest is Test {
       address(spend32Verifier),
       address(spend33Verifier),
       address(spend81Verifier),
-      address(spend161Verifier),
+      address(spend161Verifier)
+    );
+
+    vault = new Vault(
+      address(verifiers),
       address(zeroLedgerForwarder)
     );
 

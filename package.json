@@ -22,7 +22,8 @@
     "deploy": "npx hardhat deploy-bundle --network $(network)",
     "deploy:hh": "npx hardhat --network hardhat deploy-bundle",
     "deploy:localhost": "npx hardhat --network localhost deploy-bundle",
-    "deploy:t": "npx hardhat --network opSepolia deploy-bundle"
+    "deploy:t": "npx hardhat --network opSepolia deploy-bundle",
+    "abi": "hardhat export-abi"
   },
   "bugs": {
     "url": "https://github.com:zeroledger/contracts/issues"
@@ -31,10 +32,6 @@
     "@openzeppelin/contracts": "^5.4.0"
   },
   "devDependencies": {
-    "hardhat-abi-exporter": "^2.11.0",
-    "poseidon-lite": "^0.3.0",
-    "poseidon-solidity": "^0.0.5",
-    "snarkjs": "^0.7.5",
     "@dgma/hardhat-sol-bundler": "^0.5.11",
     "@eslint/js": "^9.30.0",
     "@nomicfoundation/hardhat-foundry": "^1.2.0",
@@ -48,9 +45,13 @@
     "eslint": "^9.30.0",
     "ethers": "^6.15.0",
     "hardhat": "^2.22.19",
+    "hardhat-abi-exporter": "^2.11.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.1.5",
+    "poseidon-lite": "^0.3.0",
+    "poseidon-solidity": "^0.0.5",
     "prettier": "^3.6.2",
+    "snarkjs": "^0.7.5",
     "solc": "^0.8.30",
     "solhint": "^6.0.0",
     "solidity-coverage": "^0.8.16"

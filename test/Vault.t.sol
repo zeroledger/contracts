@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-
-pragma solidity ^0.8.20;
+pragma solidity >=0.8.21;
 
 // solhint-disable no-global-import
 // solhint-disable no-console
@@ -8,7 +7,6 @@ pragma solidity ^0.8.20;
 import "@std/Test.sol";
 
 import {
-  DepositVerifier,
   Spend11Verifier,
   Spend12Verifier,
   Spend13Verifier,
@@ -24,42 +22,25 @@ import {
 } from "src/Verifiers.sol";
 import {Vault, ERC2771Forwarder} from "src/Vault.sol";
 import {MockERC20} from "src/MockERC20.sol";
-import {
-  DepositParams,
-  DepositCommitmentParams,
-  Transaction,
-  OutputsOwners,
-  WithdrawItem,
-  PublicOutput
-} from "src/Vault.types.sol";
+import {DepositParams, DepositCommitmentParams} from "src/Vault.types.sol";
+import {VaultProxy} from "./Vault.proxy.sol";
+import {MockVerifier} from "./MockVerifier.sol";
 
-// Mock DepositVerifier that always returns true
-contract MockDepositVerifier {
-  bool private verificationResult;
-
-  function setVerificationResult(bool result) public {
-    verificationResult = result;
-  }
-
-  function verify(uint256[24] calldata, uint256[4] calldata) external view returns (bool) {
-    return verificationResult;
-  }
-}
-
+// solhint-disable max-states-count
 contract VaultTest is Test {
   Vault private vault;
-  MockDepositVerifier private depositVerifier;
-  Spend11Verifier private spend11Verifier;
-  Spend12Verifier private spend12Verifier;
-  Spend13Verifier private spend13Verifier;
-  Spend21Verifier private spend21Verifier;
-  Spend22Verifier private spend22Verifier;
-  Spend23Verifier private spend23Verifier;
-  Spend31Verifier private spend31Verifier;
-  Spend32Verifier private spend32Verifier;
-  Spend33Verifier private spend33Verifier;
-  Spend81Verifier private spend81Verifier;
-  Spend161Verifier private spend161Verifier;
+  MockVerifier private depositVerifier;
+  MockVerifier private spend11Verifier;
+  MockVerifier private spend12Verifier;
+  MockVerifier private spend13Verifier;
+  MockVerifier private spend21Verifier;
+  MockVerifier private spend22Verifier;
+  MockVerifier private spend23Verifier;
+  MockVerifier private spend31Verifier;
+  MockVerifier private spend32Verifier;
+  MockVerifier private spend33Verifier;
+  MockVerifier private spend81Verifier;
+  MockVerifier private spend161Verifier;
   ERC2771Forwarder private zeroLedgerForwarder;
   MockERC20 private mockToken;
 
@@ -69,18 +50,18 @@ contract VaultTest is Test {
   address private feeRecipient = address(0x4);
 
   function setUp() public {
-    depositVerifier = new MockDepositVerifier();
-    spend11Verifier = new Spend11Verifier();
-    spend12Verifier = new Spend12Verifier();
-    spend13Verifier = new Spend13Verifier();
-    spend21Verifier = new Spend21Verifier();
-    spend22Verifier = new Spend22Verifier();
-    spend23Verifier = new Spend23Verifier();
-    spend31Verifier = new Spend31Verifier();
-    spend32Verifier = new Spend32Verifier();
-    spend33Verifier = new Spend33Verifier();
-    spend81Verifier = new Spend81Verifier();
-    spend161Verifier = new Spend161Verifier();
+    depositVerifier = new MockVerifier();
+    spend11Verifier = new MockVerifier();
+    spend12Verifier = new MockVerifier();
+    spend13Verifier = new MockVerifier();
+    spend21Verifier = new MockVerifier();
+    spend22Verifier = new MockVerifier();
+    spend23Verifier = new MockVerifier();
+    spend31Verifier = new MockVerifier();
+    spend32Verifier = new MockVerifier();
+    spend33Verifier = new MockVerifier();
+    spend81Verifier = new MockVerifier();
+    spend161Verifier = new MockVerifier();
     zeroLedgerForwarder = new ERC2771Forwarder("ZeroLedgerForwarder");
     Verifiers verifiers = new Verifiers(
       address(depositVerifier),
@@ -97,11 +78,10 @@ contract VaultTest is Test {
       address(spend161Verifier)
     );
 
-    vault = new Vault(
-      address(verifiers),
-      address(zeroLedgerForwarder)
-    );
+    VaultProxy proxy = new VaultProxy(address(vault = new Vault()), "");
 
+    vault = Vault(address(proxy));
+    vault.initialize(address(verifiers), address(zeroLedgerForwarder));
     mockToken = new MockERC20("Test Token", "TEST");
 
     // Mint tokens to test addresses
@@ -185,9 +165,9 @@ contract VaultTest is Test {
     assertEq(mockToken.balanceOf(feeRecipient), feeRecipientInitialBalance + fee, "Fee recipient should receive fee");
 
     // Verify commitments were created
-    (address owner1, bool locked1) = vault.commitmentsMap(address(mockToken), 123456789);
-    (address owner2, bool locked2) = vault.commitmentsMap(address(mockToken), 987654321);
-    (address owner3, bool locked3) = vault.commitmentsMap(address(mockToken), 555666777);
+    (address owner1, bool locked1) = vault.getCommitment(address(mockToken), 123456789);
+    (address owner2, bool locked2) = vault.getCommitment(address(mockToken), 987654321);
+    (address owner3, bool locked3) = vault.getCommitment(address(mockToken), 555666777);
 
     assertEq(owner1, alice, "Commitment 1 should be assigned to Alice");
     assertEq(owner2, bob, "Commitment 2 should be assigned to Bob");

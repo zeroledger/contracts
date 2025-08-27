@@ -1,11 +1,22 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.21;
 
-import {IERC20} from "node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {ReentrancyGuard} from "node_modules/@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {Verifiers} from "./Verifiers.sol";
-import {PoseidonT3} from "node_modules/poseidon-solidity/PoseidonT3.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+
+// not upgradable contracts & interfaces
+
+// solhint-disable-next-line no-unused-imports
+import {ERC2771Forwarder} from "@openzeppelin/contracts/metatx/ERC2771Forwarder.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Verifiers} from "./Verifiers.sol";
+
+// libs
+import {PoseidonT3} from "poseidon-solidity/PoseidonT3.sol";
+import {Roles} from "src/Roles.lib.sol";
 import {
   Commitment,
   DepositCommitmentParams,
@@ -16,20 +27,17 @@ import {
 } from "./Vault.types.sol";
 import {InputsLib} from "./Inputs.lib.sol";
 
-import {ERC2771Context} from "node_modules/@openzeppelin/contracts/metatx/ERC2771Context.sol";
-// solhint-disable-next-line no-unused-imports
-import {ERC2771Forwarder} from "node_modules/@openzeppelin/contracts/metatx/ERC2771Forwarder.sol";
-
 /**
  * @title Vault
  * @dev A contract that manages ERC20 tokens with commitments and ZK proofs for deposits, withdrawals, and spending
  */
-contract Vault is ReentrancyGuard, ERC2771Context {
-  // Mapping to track if a commitment hash has been deposited
-  mapping(address => mapping(uint256 => Commitment)) public commitmentsMap;
-
-  // Verifiers for ZK proof validation
-  Verifiers public immutable verifiers;
+contract Vault is Initializable, UUPSUpgradeable, AccessControlUpgradeable, ReentrancyGuardUpgradeable {
+  struct State {
+    // Mapping to track if a commitment hash has been deposited
+    mapping(address => mapping(uint256 => Commitment)) commitmentsMap;
+    Verifiers verifiers;
+    address trustedForwarder;
+  }
 
   // Events
   event TokenDeposited(address indexed user, address indexed token, uint256 total_deposit_amount, uint256 fee);
@@ -40,21 +48,101 @@ contract Vault is ReentrancyGuard, ERC2771Context {
   );
   event Withdrawal(address indexed user, address indexed token, uint256 total, uint256 fee);
 
-  constructor(address _verifiers, address _trustedForwarder) ERC2771Context(_trustedForwarder) {
-    verifiers = Verifiers(_verifiers);
+  // todo rerun
+  // keccak256(abi.encode(uint256(keccak256("storage.zeroledger")) - 1)) & ~bytes32(uint256(0xff))
+  bytes32 internal constant STORAGE_LOCATION = 0xebccf78d24fcded0df1a8e2842e6f7c1260d3676178a3ecb5d2650366d6afb00;
+
+  function _getStorage() internal pure returns (State storage $) {
+    // solhint-disable-next-line no-inline-assembly
+    assembly {
+      $.slot := STORAGE_LOCATION
+    }
+  }
+
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
+  }
+
+  function initialize(address verifiers, address trustedForwarder) public initializer {
+    __AccessControl_init();
+    __UUPSUpgradeable_init();
+    __ReentrancyGuard_init();
+    __vault_init_unchained(verifiers, trustedForwarder);
+
+    _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    _grantRole(Roles.MAINTAINER, msg.sender);
+  }
+
+  function upgradeCallBack(address, address, address) external reinitializer(0) {}
+
+  function _authorizeUpgrade(address newImplementation) internal override onlyRole(Roles.MAINTAINER) {}
+
+  function __vault_init_unchained(address verifiers, address trustedForwarder) internal {
+    State storage $ = _getStorage();
+    $.trustedForwarder = trustedForwarder;
+    $.verifiers = Verifiers(verifiers);
+  }
+
+  function isTrustedForwarder(address caller) internal view returns (bool) {
+    return _getStorage().trustedForwarder == caller;
+  }
+
+  /**
+   * @dev Override for `msg.sender`. Defaults to the original `msg.sender` whenever
+   * a call is not performed by the trusted forwarder or the calldata length is less than
+   * 20 bytes (an address length).
+   */
+  function _msgSender() internal view override returns (address) {
+    uint256 calldataLength = msg.data.length;
+    uint256 contextSuffixLength = _contextSuffixLength();
+    if (calldataLength >= contextSuffixLength && isTrustedForwarder(msg.sender)) {
+      unchecked {
+        return address(bytes20(msg.data[calldataLength - contextSuffixLength:]));
+      }
+    } else {
+      return super._msgSender();
+    }
+  }
+
+  /**
+   * @dev Override for `msg.data`. Defaults to the original `msg.data` whenever
+   * a call is not performed by the trusted forwarder or the calldata length is less than
+   * 20 bytes (an address length).
+   */
+  function _msgData() internal view override returns (bytes calldata) {
+    uint256 calldataLength = msg.data.length;
+    uint256 contextSuffixLength = _contextSuffixLength();
+    if (calldataLength >= contextSuffixLength && isTrustedForwarder(msg.sender)) {
+      unchecked {
+        return msg.data[:calldataLength - contextSuffixLength];
+      }
+    } else {
+      return super._msgData();
+    }
+  }
+
+  /**
+   * @dev ERC-2771 specifies the context as being a single address (20 bytes).
+   */
+  function _contextSuffixLength() internal pure override returns (uint256) {
+    return 20;
   }
 
   /**
    * @dev Deposit tokens with commitments and ZK proof validation
    */
   function deposit(DepositParams calldata depositParams, uint256[24] calldata proof) external nonReentrant {
+    State storage $ = _getStorage();
     address token = depositParams.token;
     uint256 total_deposit_amount = depositParams.total_deposit_amount;
     DepositCommitmentParams[3] calldata depositCommitmentParams = depositParams.depositCommitmentParams;
     require(token != address(0), "Vault: Invalid token address");
     require(total_deposit_amount > 0, "Vault: Amount must be greater than 0");
     require(
-      verifiers.depositVerifier().verify(proof, InputsLib.depositInputs(depositCommitmentParams, total_deposit_amount)),
+      $.verifiers.depositVerifier().verify(
+        proof, InputsLib.depositInputs(depositCommitmentParams, total_deposit_amount)
+      ),
       "Vault: Invalid ZK proof"
     );
 
@@ -65,8 +153,8 @@ contract Vault is ReentrancyGuard, ERC2771Context {
       if (poseidonHash == InputsLib.SHARED_INPUT) {
         continue;
       }
-      require(commitmentsMap[token][poseidonHash].owner == address(0), "Vault: Commitment already used");
-      commitmentsMap[token][poseidonHash] = Commitment({owner: depositCommitmentParams[i].owner, locked: false});
+      require($.commitmentsMap[token][poseidonHash].owner == address(0), "Vault: Commitment already used");
+      $.commitmentsMap[token][poseidonHash] = Commitment({owner: depositCommitmentParams[i].owner, locked: false});
       emit CommitmentCreated(
         depositCommitmentParams[i].owner, token, poseidonHash, depositCommitmentParams[i].metadata
       );
@@ -90,7 +178,8 @@ contract Vault is ReentrancyGuard, ERC2771Context {
         continue;
       }
       require(
-        commitmentsMap[transaction.token][poseidonHash].owner == _msgSender(), "Vault: Input commitment not found"
+        _getStorage().commitmentsMap[transaction.token][poseidonHash].owner == _msgSender(),
+        "Vault: Input commitment not found"
       );
     }
   }
@@ -99,13 +188,14 @@ contract Vault is ReentrancyGuard, ERC2771Context {
    * @dev Delete input commitments and emit events
    */
   function _deleteInputCommitments(Transaction calldata transaction) internal {
+    State storage $ = _getStorage();
     for (uint256 i = 0; i < transaction.inputsPoseidonHashes.length; i++) {
       uint256 inputHash = transaction.inputsPoseidonHashes[i];
       if (inputHash == InputsLib.SHARED_INPUT) {
         continue;
       }
-      address inputOwner = commitmentsMap[transaction.token][inputHash].owner;
-      delete commitmentsMap[transaction.token][inputHash];
+      address inputOwner = $.commitmentsMap[transaction.token][inputHash].owner;
+      delete $.commitmentsMap[transaction.token][inputHash];
       emit CommitmentRemoved(inputOwner, transaction.token, inputHash);
     }
   }
@@ -114,6 +204,7 @@ contract Vault is ReentrancyGuard, ERC2771Context {
    * @dev Create output commitments using indexes from output witnesses
    */
   function _createOutputCommitments(Transaction calldata transaction) internal {
+    State storage $ = _getStorage();
     for (uint256 i = 0; i < transaction.outputsOwners.length; i++) {
       OutputsOwners memory outputWitness = transaction.outputsOwners[i];
       address outputOwner = outputWitness.owner;
@@ -124,7 +215,7 @@ contract Vault is ReentrancyGuard, ERC2771Context {
         if (outputHash == InputsLib.SHARED_INPUT) {
           continue;
         }
-        commitmentsMap[transaction.token][outputHash] = Commitment({owner: outputOwner, locked: false});
+        $.commitmentsMap[transaction.token][outputHash] = Commitment({owner: outputOwner, locked: false});
         emit CommitmentCreated(outputOwner, transaction.token, outputHash, transaction.metadata[outputIndex]);
       }
     }
@@ -141,29 +232,31 @@ contract Vault is ReentrancyGuard, ERC2771Context {
 
     _validateInputIndexes(transaction);
 
+    State storage $ = _getStorage();
+
     bool isValidProof = false;
     if (transaction.inputsPoseidonHashes.length == 1 && transaction.outputsPoseidonHashes.length == 1) {
-      isValidProof = verifiers.spend11Verifier().verify(proof, InputsLib.fillSpend3Inputs(transaction));
+      isValidProof = $.verifiers.spend11Verifier().verify(proof, InputsLib.fillSpend3Inputs(transaction));
     } else if (transaction.inputsPoseidonHashes.length == 1 && transaction.outputsPoseidonHashes.length == 2) {
-      isValidProof = verifiers.spend12Verifier().verify(proof, InputsLib.fillSpend4Inputs(transaction));
+      isValidProof = $.verifiers.spend12Verifier().verify(proof, InputsLib.fillSpend4Inputs(transaction));
     } else if (transaction.inputsPoseidonHashes.length == 1 && transaction.outputsPoseidonHashes.length == 3) {
-      isValidProof = verifiers.spend13Verifier().verify(proof, InputsLib.fillSpend5Inputs(transaction));
+      isValidProof = $.verifiers.spend13Verifier().verify(proof, InputsLib.fillSpend5Inputs(transaction));
     } else if (transaction.inputsPoseidonHashes.length == 2 && transaction.outputsPoseidonHashes.length == 1) {
-      isValidProof = verifiers.spend21Verifier().verify(proof, InputsLib.fillSpend4Inputs(transaction));
+      isValidProof = $.verifiers.spend21Verifier().verify(proof, InputsLib.fillSpend4Inputs(transaction));
     } else if (transaction.inputsPoseidonHashes.length == 2 && transaction.outputsPoseidonHashes.length == 2) {
-      isValidProof = verifiers.spend22Verifier().verify(proof, InputsLib.fillSpend5Inputs(transaction));
+      isValidProof = $.verifiers.spend22Verifier().verify(proof, InputsLib.fillSpend5Inputs(transaction));
     } else if (transaction.inputsPoseidonHashes.length == 2 && transaction.outputsPoseidonHashes.length == 3) {
-      isValidProof = verifiers.spend23Verifier().verify(proof, InputsLib.fillSpend6Inputs(transaction));
+      isValidProof = $.verifiers.spend23Verifier().verify(proof, InputsLib.fillSpend6Inputs(transaction));
     } else if (transaction.inputsPoseidonHashes.length == 3 && transaction.outputsPoseidonHashes.length == 1) {
-      isValidProof = verifiers.spend31Verifier().verify(proof, InputsLib.fillSpend5Inputs(transaction));
+      isValidProof = $.verifiers.spend31Verifier().verify(proof, InputsLib.fillSpend5Inputs(transaction));
     } else if (transaction.inputsPoseidonHashes.length == 3 && transaction.outputsPoseidonHashes.length == 2) {
-      isValidProof = verifiers.spend32Verifier().verify(proof, InputsLib.fillSpend6Inputs(transaction));
+      isValidProof = $.verifiers.spend32Verifier().verify(proof, InputsLib.fillSpend6Inputs(transaction));
     } else if (transaction.inputsPoseidonHashes.length == 3 && transaction.outputsPoseidonHashes.length == 3) {
-      isValidProof = verifiers.spend33Verifier().verify(proof, InputsLib.fillSpend7Inputs(transaction));
+      isValidProof = $.verifiers.spend33Verifier().verify(proof, InputsLib.fillSpend7Inputs(transaction));
     } else if (transaction.inputsPoseidonHashes.length == 8 && transaction.outputsPoseidonHashes.length == 1) {
-      isValidProof = verifiers.spend81Verifier().verify(proof, InputsLib.fillSpend10Inputs(transaction));
+      isValidProof = $.verifiers.spend81Verifier().verify(proof, InputsLib.fillSpend10Inputs(transaction));
     } else if (transaction.inputsPoseidonHashes.length == 16 && transaction.outputsPoseidonHashes.length == 1) {
-      isValidProof = verifiers.spend161Verifier().verify(proof, InputsLib.fillSpend18Inputs(transaction));
+      isValidProof = $.verifiers.spend161Verifier().verify(proof, InputsLib.fillSpend18Inputs(transaction));
     }
 
     require(isValidProof, "Vault: Invalid ZK proof");
@@ -190,7 +283,7 @@ contract Vault is ReentrancyGuard, ERC2771Context {
   /**
    * @dev Removes commitment by providing amount and secret
    */
-  function redeemCommitment(address token, WithdrawItem calldata item) private {
+  function redeemCommitment(address token, WithdrawItem calldata item) internal {
     require(token != address(0), "Vault: Invalid token address");
     require(item.amount > 0, "Vault: Amount must be greater than 0");
 
@@ -199,11 +292,13 @@ contract Vault is ReentrancyGuard, ERC2771Context {
       return;
     }
 
-    Commitment storage commitment = commitmentsMap[token][poseidonHash];
+    State storage $ = _getStorage();
+
+    Commitment storage commitment = $.commitmentsMap[token][poseidonHash];
     require(commitment.owner != address(0), "Vault: Commitment not found");
     require(commitment.owner == _msgSender(), "Vault: Only assigned address can withdraw");
 
-    delete commitmentsMap[token][poseidonHash];
+    delete $.commitmentsMap[token][poseidonHash];
 
     emit CommitmentRemoved(_msgSender(), token, poseidonHash);
   }
@@ -238,7 +333,7 @@ contract Vault is ReentrancyGuard, ERC2771Context {
    * @dev Get commitment details for a given token and poseidon hash
    */
   function getCommitment(address token, uint256 poseidonHash) external view returns (address owner, bool locked) {
-    Commitment memory commitment = commitmentsMap[token][poseidonHash];
+    Commitment memory commitment = _getStorage().commitmentsMap[token][poseidonHash];
     return (commitment.owner, commitment.locked);
   }
 }

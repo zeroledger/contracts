@@ -1,4 +1,4 @@
-import { dynamicAddress } from "@dgma/hardhat-sol-bundler";
+import { dynamicAddress, SupportedProxies } from "@dgma/hardhat-sol-bundler";
 
 const config = {
   MockERC20: {
@@ -38,6 +38,10 @@ const config = {
     ],
   },
   Vault: {
+    proxy: {
+      type: SupportedProxies.UUPS,
+      unsafeAllow: ["external-library-linking"],
+    },
     options: {
       libs: {
         PoseidonT3: dynamicAddress("PoseidonT3"),

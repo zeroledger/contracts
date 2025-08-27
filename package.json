@@ -29,13 +29,15 @@
     "url": "https://github.com:zeroledger/contracts/issues"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^5.4.0"
+    "@openzeppelin/contracts": "^5.4.0",
+    "@openzeppelin/contracts-upgradeable": "^5.4.0"
   },
   "devDependencies": {
     "@dgma/hardhat-sol-bundler": "^0.5.11",
     "@eslint/js": "^9.30.0",
     "@nomicfoundation/hardhat-foundry": "^1.2.0",
     "@nomicfoundation/hardhat-toolbox": "^6.1.0",
+    "@openzeppelin/hardhat-upgrades": "^3.9.1",
     "@types/chai": "^4.3.16",
     "@types/mocha": "^10.0.10",
     "@types/snarkjs": "^0.7.9",

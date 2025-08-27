@@ -200,6 +200,8 @@ export async function deployVaultFixture(): Promise<TestFixture> {
   // Get the vault instance through the proxy
   const vault = VaultFactory.attach(await vaultProxy.getAddress()) as Vault;
 
+  console.log("forwarder", await zeroLedgerForwarder.getAddress());
+
   // Initialize the vault through the proxy
   await vault.initialize(await verifiers.getAddress(), await zeroLedgerForwarder.getAddress());
 

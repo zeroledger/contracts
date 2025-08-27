@@ -4,7 +4,6 @@ pragma solidity >=0.8.21;
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
 // not upgradable contracts & interfaces
@@ -84,8 +83,12 @@ contract Vault is Initializable, UUPSUpgradeable, AccessControlUpgradeable, Reen
     $.verifiers = Verifiers(verifiers);
   }
 
-  function isTrustedForwarder(address caller) internal view returns (bool) {
-    return _getStorage().trustedForwarder == caller;
+  /**
+   * @dev Returns whether any particular address is the trusted forwarder. Must has identical interface to
+   * ERC2771Context.
+   */
+  function isTrustedForwarder(address forwarder) public view virtual returns (bool) {
+    return _getStorage().trustedForwarder == forwarder;
   }
 
   /**

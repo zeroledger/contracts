@@ -49,7 +49,7 @@ contract Vault is Initializable, UUPSUpgradeable, AccessControlUpgradeable, Reen
 
   // todo rerun
   // keccak256(abi.encode(uint256(keccak256("storage.zeroledger")) - 1)) & ~bytes32(uint256(0xff))
-  bytes32 internal constant STORAGE_LOCATION = 0xebccf78d24fcded0df1a8e2842e6f7c1260d3676178a3ecb5d2650366d6afb00;
+  bytes32 internal constant STORAGE_LOCATION = 0x60ea44b2fada15ab3d55d1b53c0f3a65e4a3da4f8f909905e012d14a90d3b300;
 
   function _getStorage() internal pure returns (State storage $) {
     // solhint-disable-next-line no-inline-assembly

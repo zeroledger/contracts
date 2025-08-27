@@ -178,4 +178,11 @@ contract VaultTest is Test {
 
     vm.stopPrank();
   }
+
+  function test_vault_storage_location() public {
+    assertEq(
+      keccak256(abi.encode(uint256(keccak256("storage.zeroledger")) - 1)) & ~bytes32(uint256(0xff)),
+      0x60ea44b2fada15ab3d55d1b53c0f3a65e4a3da4f8f909905e012d14a90d3b300
+    );
+  }
 }

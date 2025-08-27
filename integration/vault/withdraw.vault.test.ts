@@ -122,8 +122,8 @@ describe("Vault Withdraw Tests", function () {
       await verifyCommitmentRemoved(commitmentData.hashes[0], vault, mockToken);
 
       // Verify other commitments still exist
-      const commitment1 = await vault.commitmentsMap(await mockToken.getAddress(), commitmentData.hashes[1]);
-      const commitment2 = await vault.commitmentsMap(await mockToken.getAddress(), commitmentData.hashes[2]);
+      const commitment1 = await vault.getCommitment(await mockToken.getAddress(), commitmentData.hashes[1]);
+      const commitment2 = await vault.getCommitment(await mockToken.getAddress(), commitmentData.hashes[2]);
       expect(commitment1.owner).to.equal(user.address);
       expect(commitment2.owner).to.equal(user.address);
 

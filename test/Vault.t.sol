@@ -21,10 +21,10 @@ import {
   Verifiers
 } from "src/Verifiers.sol";
 import {Vault, ERC2771Forwarder} from "src/Vault.sol";
-import {MockERC20} from "src/MockERC20.sol";
+import {MockERC20} from "src/helpers/MockERC20.sol";
 import {DepositParams, DepositCommitmentParams} from "src/Vault.types.sol";
-import {VaultProxy} from "./Vault.proxy.sol";
-import {MockVerifier} from "./MockVerifier.sol";
+import {VaultProxy} from "src/helpers/Vault.proxy.sol";
+import {MockVerifier} from "src/helpers/MockVerifier.sol";
 
 // solhint-disable max-states-count
 contract VaultTest is Test {

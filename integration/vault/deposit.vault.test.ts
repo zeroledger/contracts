@@ -172,7 +172,8 @@ describe("Vault Deposit Tests", function () {
 
   describe("Sponsored Deposits via Forwarder", function () {
     it("should allow a sponsor to execute a deposit for another user via ERC2771Forwarder", async function () {
-      const { vault, mockToken, user, feeRecipient, owner, baseForwarder } = await loadFixture(deployVaultFixture);
+      const { vault, mockToken, user, feeRecipient, owner, zeroLedgerForwarder } =
+        await loadFixture(deployVaultFixture);
       // user = user B (depositor), owner = user A (sponsor)
 
       // Prepare deposit data
@@ -209,10 +210,10 @@ describe("Vault Deposit Tests", function () {
       const provider = (vault.runner?.provider ?? ethers.provider) as any;
       const chainId = await provider.getNetwork().then((n: { chainId: number }) => n.chainId);
       const forwarderDomain = {
-        name: "BaseForwarder",
+        name: "ZeroLedgerForwarder",
         version: "1",
         chainId,
-        verifyingContract: await baseForwarder.getAddress(),
+        verifyingContract: await zeroLedgerForwarder.getAddress(),
       };
       const forwardRequestType = {
         ForwardRequest: [
@@ -226,7 +227,7 @@ describe("Vault Deposit Tests", function () {
         ],
       };
       // Get nonce
-      const depositNonce = await baseForwarder.nonces(user.address);
+      const depositNonce = await zeroLedgerForwarder.nonces(user.address);
       // Deadline
       const deadline = Math.floor(Date.now() / 1000) + 3600; // 1 hour from now
       // Build request
@@ -245,7 +246,7 @@ describe("Vault Deposit Tests", function () {
       const depositReqData = { ...depositRequest, signature: depositSig };
       // Sponsor executes via forwarder
       const initialBalances = await getBalances(user, feeRecipient, vault, mockToken);
-      await baseForwarder.connect(owner).execute(depositReqData);
+      await zeroLedgerForwarder.connect(owner).execute(depositReqData);
       // Assert
       const finalBalances = await getBalances(user, feeRecipient, vault, mockToken);
       verifyDepositBalances(initialBalances, finalBalances, {

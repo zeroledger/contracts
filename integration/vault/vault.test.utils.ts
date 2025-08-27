@@ -50,7 +50,7 @@ export interface TestFixture {
   user: HardhatEthersSigner;
   feeRecipient: HardhatEthersSigner;
   otherUser: HardhatEthersSigner;
-  baseForwarder: ERC2771Forwarder; // Add baseForwarder for meta-tx tests
+  zeroLedgerForwarder: ERC2771Forwarder; // Add zeroLedgerForwarder for meta-tx tests
 }
 
 // Types for withdraw testing
@@ -161,8 +161,8 @@ export async function deployVaultFixture(): Promise<TestFixture> {
   await spend161Verifier.waitForDeployment();
 
   const ForwarderFactory = await ethers.getContractFactory("ERC2771Forwarder");
-  const baseForwarder = await ForwarderFactory.deploy("BaseForwarder");
-  await baseForwarder.waitForDeployment();
+  const zeroLedgerForwarder = await ForwarderFactory.deploy("ZeroLedgerForwarder");
+  await zeroLedgerForwarder.waitForDeployment();
 
   const VerifiersFactory = await ethers.getContractFactory("Verifiers");
   const verifiers = await VerifiersFactory.deploy(
@@ -181,7 +181,7 @@ export async function deployVaultFixture(): Promise<TestFixture> {
   );
   await verifiers.waitForDeployment();
 
-  // Deploy Vault
+  // Deploy Vault implementation
   const VaultFactory = await ethers.getContractFactory("Vault", {
     libraries: {
       PoseidonT3: await poseidonT3.getAddress(),
@@ -189,8 +189,19 @@ export async function deployVaultFixture(): Promise<TestFixture> {
     },
   });
 
-  const vault = await VaultFactory.deploy(await verifiers.getAddress(), await baseForwarder.getAddress());
-  await vault.waitForDeployment();
+  const vaultImplementation = await VaultFactory.deploy();
+  await vaultImplementation.waitForDeployment();
+
+  // Deploy VaultProxy
+  const VaultProxyFactory = await ethers.getContractFactory("VaultProxy");
+  const vaultProxy = await VaultProxyFactory.deploy(await vaultImplementation.getAddress(), "0x");
+  await vaultProxy.waitForDeployment();
+
+  // Get the vault instance through the proxy
+  const vault = VaultFactory.attach(await vaultProxy.getAddress()) as Vault;
+
+  // Initialize the vault through the proxy
+  await vault.initialize(await verifiers.getAddress(), await zeroLedgerForwarder.getAddress());
 
   // Mint tokens to users for testing
   const mintAmount = ethers.parseEther("1000");
@@ -205,7 +216,7 @@ export async function deployVaultFixture(): Promise<TestFixture> {
     user,
     feeRecipient,
     otherUser,
-    baseForwarder, // Export the forwarder for meta-tx tests
+    zeroLedgerForwarder, // Export the forwarder for meta-tx tests
   };
 }
 
@@ -322,7 +333,7 @@ export function verifyDepositBalances(
 // Helper function to verify commitments were created
 export async function verifyCommitments(hashes: string[], userAddress: string, vault: Vault, mockToken: MockERC20) {
   for (let i = 0; i < hashes.length; i++) {
-    const commitment = await vault.commitmentsMap(await mockToken.getAddress(), hashes[i]);
+    const commitment = await vault.getCommitment(await mockToken.getAddress(), hashes[i]);
     expect(commitment.owner).to.equal(userAddress);
     expect(commitment.locked).to.be.false;
   }
@@ -371,7 +382,7 @@ export function verifyWithdrawBalances(
 
 // Helper function to verify commitment was removed
 export async function verifyCommitmentRemoved(hash: string, vault: Vault, mockToken: MockERC20) {
-  const commitment = await vault.commitmentsMap(await mockToken.getAddress(), hash);
+  const commitment = await vault.getCommitment(await mockToken.getAddress(), hash);
   expect(commitment.owner).to.equal(ethers.ZeroAddress);
 }
 
@@ -491,7 +502,7 @@ export function verifySpendEvents(receipt: any, inputHashes: string[], outputHas
 // Helper function to verify input commitments were removed
 export async function verifyInputCommitmentsRemoved(inputHashes: string[], vault: Vault, mockToken: MockERC20) {
   for (const hash of inputHashes) {
-    const commitment = await vault.commitmentsMap(await mockToken.getAddress(), hash);
+    const commitment = await vault.getCommitment(await mockToken.getAddress(), hash);
     expect(commitment.owner).to.equal(ethers.ZeroAddress);
   }
 }
@@ -504,7 +515,7 @@ export async function verifyOutputCommitmentsCreated(
   mockToken: MockERC20,
 ) {
   for (const hash of outputHashes) {
-    const commitment = await vault.commitmentsMap(await mockToken.getAddress(), hash);
+    const commitment = await vault.getCommitment(await mockToken.getAddress(), hash);
     expect(commitment.owner).to.equal(userAddress);
     expect(commitment.locked).to.be.false;
   }

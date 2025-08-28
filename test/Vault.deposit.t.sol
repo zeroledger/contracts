@@ -3,10 +3,11 @@ pragma solidity >=0.8.21;
 
 import {VaultTest} from "./VaultTest.util.sol";
 import {DepositParams, DepositCommitmentParams} from "src/Vault.types.sol";
+import {IVaultEvents} from "src/Vault.sol";
 
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
-contract VaultDepositTest is VaultTest {
+contract VaultDepositTest is VaultTest, IVaultEvents {
   function setUp() public {
     baseSetup();
   }
@@ -368,6 +369,49 @@ contract VaultDepositTest is VaultTest {
     assertEq(owner2, bob, "Commitment 2 should be assigned to Bob");
     assertEq(owner3, charlie, "Commitment 3 should be assigned to Charlie");
 
+    vm.stopPrank();
+  }
+
+  // Test deposit events emission
+  function test_deposit_events() public {
+    uint240 depositAmount = uint240(100e18);
+    uint240 fee = uint240(5e18);
+    uint240 totalAmount = depositAmount + fee;
+
+    depositVerifier.setVerificationResult(true);
+
+    DepositCommitmentParams[3] memory commitmentParams;
+    commitmentParams[0] = DepositCommitmentParams({poseidonHash: 123456789, owner: alice, metadata: "metadata1"});
+    commitmentParams[1] = DepositCommitmentParams({poseidonHash: 987654321, owner: bob, metadata: "metadata2"});
+    commitmentParams[2] = DepositCommitmentParams({poseidonHash: 555666777, owner: charlie, metadata: "metadata3"});
+
+    DepositParams memory depositParams = DepositParams({
+      token: address(mockToken),
+      total_deposit_amount: depositAmount,
+      depositCommitmentParams: commitmentParams,
+      fee: fee,
+      feeRecipient: feeRecipient
+    });
+
+    uint256[24] memory proof = getDummyProof();
+
+    vm.startPrank(alice);
+    mockToken.approve(address(vault), totalAmount);
+
+    // Expect events to be emitted (in the order they are actually emitted)
+    vm.expectEmit(true, true, false, true);
+    emit CommitmentCreated(alice, address(mockToken), 123456789, "metadata1");
+
+    vm.expectEmit(true, true, false, true);
+    emit CommitmentCreated(bob, address(mockToken), 987654321, "metadata2");
+
+    vm.expectEmit(true, true, false, true);
+    emit CommitmentCreated(charlie, address(mockToken), 555666777, "metadata3");
+
+    vm.expectEmit(true, true, false, true);
+    emit TokenDeposited(alice, address(mockToken), depositAmount, fee);
+
+    vault.deposit(depositParams, proof);
     vm.stopPrank();
   }
 }

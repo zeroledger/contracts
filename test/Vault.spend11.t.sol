@@ -3,8 +3,9 @@ pragma solidity >=0.8.21;
 
 import {VaultTest} from "./VaultTest.util.sol";
 import {Transaction, OutputsOwners, PublicOutput} from "src/Vault.types.sol";
+import {IVaultEvents} from "src/Vault.sol";
 
-contract VaultSpend11Test is VaultTest {
+contract VaultSpend11Test is VaultTest, IVaultEvents {
   function setUp() public {
     baseSetup();
   }
@@ -59,6 +60,18 @@ contract VaultSpend11Test is VaultTest {
     // Record initial state
     (address inputOwnerBefore,) = vault.getCommitment(address(mockToken), inputHash);
     (address outputOwnerBefore,) = vault.getCommitment(address(mockToken), outputHash);
+
+    // Expect events to be emitted
+    vm.expectEmit(true, true, false, true);
+    emit CommitmentRemoved(alice, address(mockToken), inputHash);
+
+    vm.expectEmit(true, true, false, true);
+    emit CommitmentCreated(alice, address(mockToken), outputHash, "spend11_metadata");
+
+    vm.expectEmit(true, true, false, true);
+    emit TransactionSpent(
+      alice, address(mockToken), transaction.inputsPoseidonHashes, transaction.outputsPoseidonHashes, 0
+    );
 
     // Execute the spend transaction
     vm.startPrank(alice);

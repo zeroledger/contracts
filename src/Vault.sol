@@ -26,19 +26,7 @@ import {
 } from "./Vault.types.sol";
 import {InputsLib} from "./Inputs.lib.sol";
 
-/**
- * @title Vault
- * @dev A contract that manages ERC20 tokens with commitments and ZK proofs for deposits, withdrawals, and spending
- */
-contract Vault is Initializable, UUPSUpgradeable, AccessControlUpgradeable, ReentrancyGuardUpgradeable {
-  struct State {
-    // Mapping to track if a commitment hash has been deposited
-    mapping(address => mapping(uint256 => Commitment)) commitmentsMap;
-    Verifiers verifiers;
-    address trustedForwarder;
-  }
-
-  // Events
+interface IVaultEvents {
   event TokenDeposited(address indexed user, address indexed token, uint256 total_deposit_amount, uint256 fee);
   event CommitmentCreated(address indexed owner, address indexed token, uint256 poseidonHash, bytes metadata);
   event CommitmentRemoved(address indexed owner, address indexed token, uint256 poseidonHash);
@@ -46,6 +34,19 @@ contract Vault is Initializable, UUPSUpgradeable, AccessControlUpgradeable, Reen
     address indexed owner, address indexed token, uint256[] inputHashes, uint256[] outputHashes, uint256 fee
   );
   event Withdrawal(address indexed user, address indexed token, uint256 total, uint256 fee);
+}
+
+/**
+ * @title Vault
+ * @dev A contract that manages ERC20 tokens with commitments and ZK proofs for deposits, withdrawals, and spending
+ */
+contract Vault is Initializable, UUPSUpgradeable, AccessControlUpgradeable, ReentrancyGuardUpgradeable, IVaultEvents {
+  struct State {
+    // Mapping to track if a commitment hash has been deposited
+    mapping(address => mapping(uint256 => Commitment)) commitmentsMap;
+    Verifiers verifiers;
+    address trustedForwarder;
+  }
 
   // todo rerun
   // keccak256(abi.encode(uint256(keccak256("storage.zeroledger")) - 1)) & ~bytes32(uint256(0xff))

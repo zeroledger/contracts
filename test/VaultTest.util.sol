@@ -1,0 +1,86 @@
+// SPDX-License-Identifier: GPL-3.0
+pragma solidity >=0.8.21;
+
+// solhint-disable no-global-import
+// solhint-disable no-console
+
+import "@std/Test.sol";
+
+import {Verifiers} from "src/Verifiers.sol";
+import {Vault, ERC2771Forwarder} from "src/Vault.sol";
+import {MockERC20} from "src/helpers/MockERC20.sol";
+import {VaultProxy} from "src/helpers/Vault.proxy.sol";
+import {MockVerifier} from "src/helpers/MockVerifier.sol";
+
+// solhint-disable max-states-count
+contract VaultTest is Test {
+  Vault internal vault;
+  MockVerifier internal depositVerifier;
+  MockVerifier internal spend11Verifier;
+  MockVerifier internal spend12Verifier;
+  MockVerifier internal spend13Verifier;
+  MockVerifier internal spend21Verifier;
+  MockVerifier internal spend22Verifier;
+  MockVerifier internal spend23Verifier;
+  MockVerifier internal spend31Verifier;
+  MockVerifier internal spend32Verifier;
+  MockVerifier internal spend33Verifier;
+  MockVerifier internal spend81Verifier;
+  MockVerifier internal spend161Verifier;
+  ERC2771Forwarder internal zeroLedgerForwarder;
+  MockERC20 internal mockToken;
+
+  address internal alice = address(0x1);
+  address internal bob = address(0x2);
+  address internal charlie = address(0x3);
+  address internal feeRecipient = address(0x4);
+
+  function baseSetup() internal {
+    depositVerifier = new MockVerifier();
+    spend11Verifier = new MockVerifier();
+    spend12Verifier = new MockVerifier();
+    spend13Verifier = new MockVerifier();
+    spend21Verifier = new MockVerifier();
+    spend22Verifier = new MockVerifier();
+    spend23Verifier = new MockVerifier();
+    spend31Verifier = new MockVerifier();
+    spend32Verifier = new MockVerifier();
+    spend33Verifier = new MockVerifier();
+    spend81Verifier = new MockVerifier();
+    spend161Verifier = new MockVerifier();
+    zeroLedgerForwarder = new ERC2771Forwarder("ZeroLedgerForwarder");
+    Verifiers verifiers = new Verifiers(
+      address(depositVerifier),
+      address(spend11Verifier),
+      address(spend12Verifier),
+      address(spend13Verifier),
+      address(spend21Verifier),
+      address(spend22Verifier),
+      address(spend23Verifier),
+      address(spend31Verifier),
+      address(spend32Verifier),
+      address(spend33Verifier),
+      address(spend81Verifier),
+      address(spend161Verifier)
+    );
+
+    VaultProxy proxy = new VaultProxy(address(vault = new Vault()), "");
+
+    vault = Vault(address(proxy));
+    vault.initialize(address(verifiers), address(zeroLedgerForwarder));
+    mockToken = new MockERC20("Test Token", "TEST");
+
+    // Mint tokens to test addresses
+    mockToken.mint(alice, 1000e18);
+    mockToken.mint(bob, 1000e18);
+    mockToken.mint(charlie, 1000e18);
+  }
+
+  function getDummyProof() internal pure returns (uint256[24] memory) {
+    uint256[24] memory proof;
+    for (uint256 i = 0; i < 24; i++) {
+      proof[i] = i + 1;
+    }
+    return proof;
+  }
+}

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0
+// SPDX-License-Identifier: MIT
 pragma solidity >=0.8.21;
 
 // solhint-disable no-global-import
@@ -11,6 +11,7 @@ import {Vault, ERC2771Forwarder} from "src/Vault.sol";
 import {MockERC20} from "src/helpers/MockERC20.sol";
 import {VaultProxy} from "src/helpers/Vault.proxy.sol";
 import {MockVerifier} from "src/helpers/MockVerifier.sol";
+import {DepositParams, DepositCommitmentParams, Transaction, OutputsOwners, PublicOutput} from "src/Vault.types.sol";
 
 // solhint-disable max-states-count
 contract VaultTest is Test {
@@ -82,5 +83,39 @@ contract VaultTest is Test {
       proof[i] = i + 1;
     }
     return proof;
+  }
+
+  // Helper function to create a deposit
+  function createDeposit(
+    address user,
+    uint240 depositAmount,
+    uint240 fee,
+    uint256[3] memory poseidonHashes,
+    address[3] memory owners
+  ) internal {
+    depositVerifier.setVerificationResult(true);
+
+    DepositCommitmentParams[3] memory commitmentParams;
+    commitmentParams[0] =
+      DepositCommitmentParams({poseidonHash: poseidonHashes[0], owner: owners[0], metadata: "metadata1"});
+    commitmentParams[1] =
+      DepositCommitmentParams({poseidonHash: poseidonHashes[1], owner: owners[1], metadata: "metadata2"});
+    commitmentParams[2] =
+      DepositCommitmentParams({poseidonHash: poseidonHashes[2], owner: owners[2], metadata: "metadata3"});
+
+    DepositParams memory depositParams = DepositParams({
+      token: address(mockToken),
+      total_deposit_amount: depositAmount,
+      depositCommitmentParams: commitmentParams,
+      fee: fee,
+      feeRecipient: feeRecipient
+    });
+
+    uint256[24] memory proof = getDummyProof();
+
+    vm.startPrank(user);
+    mockToken.approve(address(vault), uint256(depositAmount + fee));
+    vault.deposit(depositParams, proof);
+    vm.stopPrank();
   }
 }

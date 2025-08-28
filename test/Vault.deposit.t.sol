@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0
+// SPDX-License-Identifier: MIT
 pragma solidity >=0.8.21;
 
 import {VaultTest} from "./VaultTest.util.sol";
@@ -27,31 +27,13 @@ contract VaultDepositTest is VaultTest {
       mockToken.mint(alice, totalAmount);
     }
 
-    depositVerifier.setVerificationResult(true);
-
-    DepositCommitmentParams[3] memory commitmentParams;
-    commitmentParams[0] = DepositCommitmentParams({poseidonHash: 123456789, owner: alice, metadata: "metadata1"});
-    commitmentParams[1] = DepositCommitmentParams({poseidonHash: 987654321, owner: bob, metadata: "metadata2"});
-    commitmentParams[2] = DepositCommitmentParams({poseidonHash: 555666777, owner: charlie, metadata: "metadata3"});
-
-    DepositParams memory depositParams = DepositParams({
-      token: address(mockToken),
-      total_deposit_amount: depositAmount,
-      depositCommitmentParams: commitmentParams,
-      fee: fee,
-      feeRecipient: feeRecipient
-    });
-
-    uint256[24] memory proof = getDummyProof();
-
-    vm.startPrank(alice);
-    mockToken.approve(address(vault), totalAmount);
-
     uint256 aliceInitialBalance = mockToken.balanceOf(alice);
     uint256 vaultInitialBalance = mockToken.balanceOf(address(vault));
     uint256 feeRecipientInitialBalance = mockToken.balanceOf(feeRecipient);
 
-    vault.deposit(depositParams, proof);
+    createDeposit(
+      alice, depositAmount, fee, [uint256(123456789), uint256(987654321), uint256(555666777)], [alice, bob, charlie]
+    );
 
     // Verify balances
     assertEq(mockToken.balanceOf(alice), aliceInitialBalance - totalAmount, "Alice balance should be reduced");
@@ -118,27 +100,13 @@ contract VaultDepositTest is VaultTest {
 
   // Test deposit with same owner for all commitments
   function test_deposit_same_owner_all_commitments() public {
-    depositVerifier.setVerificationResult(true);
-
-    DepositCommitmentParams[3] memory commitmentParams;
-    commitmentParams[0] = DepositCommitmentParams({poseidonHash: 123456789, owner: alice, metadata: "metadata1"});
-    commitmentParams[1] = DepositCommitmentParams({poseidonHash: 987654321, owner: alice, metadata: "metadata2"});
-    commitmentParams[2] = DepositCommitmentParams({poseidonHash: 555666777, owner: alice, metadata: "metadata3"});
-
-    DepositParams memory depositParams = DepositParams({
-      token: address(mockToken),
-      total_deposit_amount: defaultDepositAmount,
-      depositCommitmentParams: commitmentParams,
-      fee: defaultFee,
-      feeRecipient: feeRecipient
-    });
-
-    uint256[24] memory proof = getDummyProof();
-
-    vm.startPrank(alice);
-    mockToken.approve(address(vault), defaultTotalAmount);
-
-    vault.deposit(depositParams, proof);
+    createDeposit(
+      alice,
+      defaultDepositAmount,
+      defaultFee,
+      [uint256(123456789), uint256(987654321), uint256(555666777)],
+      [alice, alice, alice]
+    );
 
     // Verify all commitments were created for Alice
     (address owner1,) = vault.getCommitment(address(mockToken), 123456789);

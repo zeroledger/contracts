@@ -74,7 +74,9 @@ contract Vault is Initializable, UUPSUpgradeable, AccessControlUpgradeable, Reen
     _grantRole(Roles.MAINTAINER, msg.sender);
   }
 
-  function upgradeCallBack(address, address, address) external reinitializer(0) {}
+  function upgradeCallBack(address verifiers, address trustedForwarder) external reinitializer(2) {
+    __vault_init_unchained(verifiers, trustedForwarder);
+  }
 
   function _authorizeUpgrade(address newImplementation) internal override onlyRole(Roles.MAINTAINER) {}
 

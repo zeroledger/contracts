@@ -15,9 +15,9 @@ struct DepositCommitmentParams {
 
 struct DepositParams {
   address token;
-  uint256 total_deposit_amount;
+  uint240 total_deposit_amount;
   DepositCommitmentParams[3] depositCommitmentParams;
-  uint256 fee;
+  uint240 fee;
   address feeRecipient;
 }
 
@@ -36,7 +36,7 @@ struct Transaction {
 }
 
 struct WithdrawItem {
-  uint256 amount;
+  uint240 amount;
   uint256 sValue;
 }
 

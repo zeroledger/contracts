@@ -10,7 +10,7 @@ import {
   OutputsOwnersStruct,
 } from "../../typechain-types/src/Vault";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import { ERC2771Forwarder, MockERC20, DepositVerifier, Vault } from "../../typechain-types";
+import { MockERC20, DepositVerifier, Vault, Manager, Forwarder } from "../../typechain-types";
 
 // Types for better organization
 export interface DepositTestData {
@@ -50,7 +50,8 @@ export interface TestFixture {
   user: HardhatEthersSigner;
   feeRecipient: HardhatEthersSigner;
   otherUser: HardhatEthersSigner;
-  zeroLedgerForwarder: ERC2771Forwarder; // Add zeroLedgerForwarder for meta-tx tests
+  zeroLedgerForwarder: Forwarder; // Add zeroLedgerForwarder for meta-tx tests
+  manager: Manager;
 }
 
 // Types for withdraw testing
@@ -160,10 +161,6 @@ export async function deployVaultFixture(): Promise<TestFixture> {
   const spend161Verifier = await Spend161VerifierFactory.deploy();
   await spend161Verifier.waitForDeployment();
 
-  const ForwarderFactory = await ethers.getContractFactory("ERC2771Forwarder");
-  const zeroLedgerForwarder = await ForwarderFactory.deploy("ZeroLedgerForwarder");
-  await zeroLedgerForwarder.waitForDeployment();
-
   const VerifiersFactory = await ethers.getContractFactory("Verifiers");
   const verifiers = await VerifiersFactory.deploy(
     await depositVerifier.getAddress(),
@@ -181,6 +178,34 @@ export async function deployVaultFixture(): Promise<TestFixture> {
   );
   await verifiers.waitForDeployment();
 
+  // Deploy Manager
+  const ManagerFactory = await ethers.getContractFactory("Manager");
+  const managerImplementation = await ManagerFactory.deploy();
+  await managerImplementation.waitForDeployment();
+
+  // Deploy Manager Proxy
+  const ManagerProxyFactory = await ethers.getContractFactory("ERC1967Proxy");
+  const managerProxy = await ManagerProxyFactory.deploy(await managerImplementation.getAddress(), "0x");
+  await managerProxy.waitForDeployment();
+
+  // Get the manager instance through the proxy
+  const manager = ManagerFactory.attach(await managerProxy.getAddress()) as Manager;
+  await manager.initialize(owner.address);
+
+  // Deploy forwarder implementation
+  const ForwarderFactory = await ethers.getContractFactory("Forwarder");
+  const forwarderImplementation = await ForwarderFactory.deploy();
+  await forwarderImplementation.waitForDeployment();
+
+  // Deploy forwarder proxy
+  const ForwarderProxyFactory = await ethers.getContractFactory("ERC1967Proxy");
+  const forwarderProxy = await ForwarderProxyFactory.deploy(await forwarderImplementation.getAddress(), "0x");
+  await forwarderProxy.waitForDeployment();
+
+  // Get the forwarder instance through the proxy
+  const zeroLedgerForwarder = ForwarderFactory.attach(await forwarderProxy.getAddress()) as Forwarder;
+  await zeroLedgerForwarder["initialize(address)"](await manager.getAddress());
+
   // Deploy Vault implementation
   const VaultFactory = await ethers.getContractFactory("Vault", {
     libraries: {
@@ -193,17 +218,19 @@ export async function deployVaultFixture(): Promise<TestFixture> {
   await vaultImplementation.waitForDeployment();
 
   // Deploy VaultProxy
-  const VaultProxyFactory = await ethers.getContractFactory("VaultProxy");
+  const VaultProxyFactory = await ethers.getContractFactory("ERC1967Proxy");
   const vaultProxy = await VaultProxyFactory.deploy(await vaultImplementation.getAddress(), "0x");
   await vaultProxy.waitForDeployment();
 
   // Get the vault instance through the proxy
   const vault = VaultFactory.attach(await vaultProxy.getAddress()) as Vault;
 
-  console.log("forwarder", await zeroLedgerForwarder.getAddress());
-
   // Initialize the vault through the proxy
-  await vault.initialize(await verifiers.getAddress(), await zeroLedgerForwarder.getAddress());
+  await vault.initialize(
+    await verifiers.getAddress(),
+    await zeroLedgerForwarder.getAddress(),
+    await manager.getAddress(),
+  );
 
   // Mint tokens to users for testing
   const mintAmount = ethers.parseEther("1000");
@@ -219,6 +246,7 @@ export async function deployVaultFixture(): Promise<TestFixture> {
     feeRecipient,
     otherUser,
     zeroLedgerForwarder, // Export the forwarder for meta-tx tests
+    manager,
   };
 }
 

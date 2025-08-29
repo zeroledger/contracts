@@ -17,8 +17,8 @@ contract Forwarder is Initializable, UUPSUpgradeable, AccessControlUpgradeable, 
     Manager manager;
   }
 
-  // keccak256(abi.encode(uint256(keccak256("storage.zeroledger.Forwarder")) - 1)) & ~bytes32(uint256(0xff))
-  bytes32 internal constant STORAGE_LOCATION = 0x60ea44b2fada15ab3d55d1b53c0f3a65e4a3da4f8f909905e012d14a90d3b300;
+  // keccak256(abi.encode(uint256(keccak256("storage.zeroledger.forwarder")) - 1)) & ~bytes32(uint256(0xff))
+  bytes32 internal constant STORAGE_LOCATION = 0x51362966e92df5c04c0f76086a8cd5e148faf622e58eb20b42b402e453aac800;
 
   function _getStorage() internal pure returns (State storage $) {
     // solhint-disable-next-line no-inline-assembly

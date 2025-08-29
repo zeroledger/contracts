@@ -16,7 +16,7 @@ contract Manager is Initializable, UUPSUpgradeable, AccessControlUpgradeable {
   }
 
   // keccak256(abi.encode(uint256(keccak256("storage.zeroledger.manager")) - 1)) & ~bytes32(uint256(0xff))
-  bytes32 internal constant STORAGE_LOCATION = 0x60ea44b2fada15ab3d55d1b53c0f3a65e4a3da4f8f909905e012d14a90d3b300;
+  bytes32 internal constant STORAGE_LOCATION = 0x1e6edab0c58916f2cdb4173a0950c64e221f1070d5cd2e7a1af36c4a77561400;
 
   function _getStorage() internal pure returns (State storage $) {
     // solhint-disable-next-line no-inline-assembly
@@ -45,7 +45,7 @@ contract Manager is Initializable, UUPSUpgradeable, AccessControlUpgradeable {
   function _authorizeUpgrade(address newImplementation) internal override onlyRole(Roles.MAINTAINER) {}
 
   function __manager_init_unchained(address defaultPaymaster) internal {
-    setPaymaster(defaultPaymaster);
+    _getStorage().paymasters[defaultPaymaster] = true;
   }
 
   function setFeeFloor(address token, uint240 feeFloor) external onlyRole(Roles.MANAGER) {

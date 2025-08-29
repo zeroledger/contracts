@@ -9,9 +9,8 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/ut
 // not upgradable contracts & interfaces
 
 // solhint-disable-next-line no-unused-imports
-import {ERC2771Forwarder} from "@openzeppelin/contracts/metatx/ERC2771Forwarder.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {Verifiers} from "./Verifiers.sol";
+import {Verifiers} from "src/Verifiers.sol";
 
 // libs
 import {PoseidonT3} from "poseidon-solidity/PoseidonT3.sol";
@@ -25,6 +24,7 @@ import {
   WithdrawItem
 } from "./Vault.types.sol";
 import {InputsLib} from "./Inputs.lib.sol";
+import {Manager} from "src/Manager.sol";
 
 interface IVaultEvents {
   event TokenDeposited(address indexed user, address indexed token, uint256 total_deposit_amount, uint256 fee);
@@ -46,9 +46,10 @@ contract Vault is Initializable, UUPSUpgradeable, AccessControlUpgradeable, Reen
     mapping(address => mapping(uint256 => Commitment)) commitmentsMap;
     Verifiers verifiers;
     address trustedForwarder;
+    bool frozen;
+    Manager manager;
   }
 
-  // todo rerun
   // keccak256(abi.encode(uint256(keccak256("storage.zeroledger")) - 1)) & ~bytes32(uint256(0xff))
   bytes32 internal constant STORAGE_LOCATION = 0x60ea44b2fada15ab3d55d1b53c0f3a65e4a3da4f8f909905e012d14a90d3b300;
 
@@ -64,26 +65,37 @@ contract Vault is Initializable, UUPSUpgradeable, AccessControlUpgradeable, Reen
     _disableInitializers();
   }
 
-  function initialize(address verifiers, address trustedForwarder) public initializer {
+  function initialize(address verifiers, address trustedForwarder, address manager) public initializer {
     __AccessControl_init();
     __UUPSUpgradeable_init();
     __ReentrancyGuard_init();
-    __vault_init_unchained(verifiers, trustedForwarder);
+    __vault_init_unchained(verifiers, trustedForwarder, manager);
 
     _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     _grantRole(Roles.MAINTAINER, msg.sender);
+    _grantRole(Roles.SECURITY_COUNCIL, msg.sender);
   }
 
-  function upgradeCallBack(address verifiers, address trustedForwarder) external reinitializer(3) {
-    __vault_init_unchained(verifiers, trustedForwarder);
+  function upgradeCallBack(address verifiers, address trustedForwarder, address manager) external reinitializer(3) {
+    __vault_init_unchained(verifiers, trustedForwarder, manager);
   }
 
   function _authorizeUpgrade(address newImplementation) internal override onlyRole(Roles.MAINTAINER) {}
 
-  function __vault_init_unchained(address verifiers, address trustedForwarder) internal {
+  function __vault_init_unchained(address verifiers, address trustedForwarder, address manager) internal {
     State storage $ = _getStorage();
     $.trustedForwarder = trustedForwarder;
+    $.manager = Manager(manager);
     $.verifiers = Verifiers(verifiers);
+  }
+
+  modifier onlyActive() {
+    require(_getStorage().frozen == false, "Vault is frozen");
+    _;
+  }
+
+  function freeze() external onlyRole(Roles.SECURITY_COUNCIL) {
+    _getStorage().frozen = true;
   }
 
   /**
@@ -138,7 +150,7 @@ contract Vault is Initializable, UUPSUpgradeable, AccessControlUpgradeable, Reen
   /**
    * @dev Deposit tokens with commitments and ZK proof validation
    */
-  function deposit(DepositParams calldata depositParams, uint256[24] calldata proof) external nonReentrant {
+  function deposit(DepositParams calldata depositParams, uint256[24] calldata proof) external nonReentrant onlyActive {
     State storage $ = _getStorage();
     address token = depositParams.token;
     uint256 total_deposit_amount = depositParams.total_deposit_amount;
@@ -231,7 +243,7 @@ contract Vault is Initializable, UUPSUpgradeable, AccessControlUpgradeable, Reen
    * @dev Spend commitments by creating new ones (supports multiple inputs and outputs)
    */
   // solhint-disable-next-line code-complexity
-  function spend(Transaction calldata transaction, uint256[24] calldata proof) external nonReentrant {
+  function spend(Transaction calldata transaction, uint256[24] calldata proof) external nonReentrant onlyActive {
     require(transaction.token != address(0), "Vault: Invalid token address");
     require(transaction.inputsPoseidonHashes.length > 0, "Vault: No inputs provided");
     require(transaction.outputsPoseidonHashes.length > 0, "Vault: No outputs provided");
@@ -341,5 +353,9 @@ contract Vault is Initializable, UUPSUpgradeable, AccessControlUpgradeable, Reen
   function getCommitment(address token, uint256 poseidonHash) external view returns (address owner, bool locked) {
     Commitment memory commitment = _getStorage().commitmentsMap[token][poseidonHash];
     return (commitment.owner, commitment.locked);
+  }
+
+  function getTrustedForwarder() external view returns (address) {
+    return _getStorage().trustedForwarder;
   }
 }

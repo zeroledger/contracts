@@ -7,19 +7,13 @@ pragma solidity >=0.8.21;
 import "@std/Test.sol";
 
 import {Verifiers} from "src/Verifiers.sol";
-import {Vault, ERC2771Forwarder} from "src/Vault.sol";
+import {Vault} from "src/Vault.sol";
+import {Forwarder} from "src/Forwarder.sol";
 import {MockERC20} from "src/helpers/MockERC20.sol";
-import {VaultProxy} from "src/helpers/Vault.proxy.sol";
-import {MockVerifier} from "src/helpers/MockVerifier.sol";
-import {
-  DepositParams,
-  DepositCommitmentParams,
-  Transaction,
-  OutputsOwners,
-  PublicOutput,
-  Commitment,
-  WithdrawItem
-} from "src/Vault.types.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {MockVerifier} from "./mocks/MockVerifier.sol";
+import {MockManager} from "./mocks/MockManager.sol";
+import {DepositParams, DepositCommitmentParams} from "src/Vault.types.sol";
 
 // solhint-disable max-states-count
 contract VaultTest is Test {
@@ -36,9 +30,9 @@ contract VaultTest is Test {
   MockVerifier internal spend33Verifier;
   MockVerifier internal spend81Verifier;
   MockVerifier internal spend161Verifier;
-  ERC2771Forwarder internal zeroLedgerForwarder;
+  Forwarder internal zeroLedgerForwarder;
   MockERC20 internal mockToken;
-
+  MockManager internal mockManager;
   address internal alice = address(0x1);
   address internal bob = address(0x2);
   address internal charlie = address(0x3);
@@ -57,7 +51,6 @@ contract VaultTest is Test {
     spend33Verifier = new MockVerifier();
     spend81Verifier = new MockVerifier();
     spend161Verifier = new MockVerifier();
-    zeroLedgerForwarder = new ERC2771Forwarder("ZeroLedgerForwarder");
     Verifiers verifiers = new Verifiers(
       address(depositVerifier),
       address(spend11Verifier),
@@ -72,11 +65,16 @@ contract VaultTest is Test {
       address(spend81Verifier),
       address(spend161Verifier)
     );
+    mockManager = new MockManager();
 
-    VaultProxy proxy = new VaultProxy(address(vault = new Vault()), "");
+    ERC1967Proxy forwarderProxy = new ERC1967Proxy(address(new Forwarder()), "");
+    zeroLedgerForwarder = Forwarder(address(forwarderProxy));
+    zeroLedgerForwarder.initialize(address(mockManager));
 
-    vault = Vault(address(proxy));
-    vault.initialize(address(verifiers), address(zeroLedgerForwarder));
+    ERC1967Proxy vaultProxy = new ERC1967Proxy(address(new Vault()), "");
+    
+    vault = Vault(address(vaultProxy));
+    vault.initialize(address(verifiers), address(forwarderProxy), address(mockManager));
     mockToken = new MockERC20("Test Token", "TEST");
 
     // Mint tokens to test addresses

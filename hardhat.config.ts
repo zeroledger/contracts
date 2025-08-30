@@ -2,7 +2,6 @@ import dotenv from "dotenv";
 const config = dotenv.config();
 
 import "@nomicfoundation/hardhat-toolbox";
-import "@dgma/hardhat-sol-bundler";
 import "@openzeppelin/hardhat-upgrades";
 import "hardhat-abi-exporter";
 import { ZeroHash } from "ethers";

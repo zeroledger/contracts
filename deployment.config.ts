@@ -1,11 +1,8 @@
-import { dynamicAddress, SupportedProxies } from "@dgma/hardhat-sol-bundler";
+import { dynamicAddress } from "@dgma/hardhat-sol-bundler";
 
 const config = {
   MockERC20: {
     args: ["MockERC20", "MCK"],
-  },
-  ERC2771Forwarder: {
-    args: ["ZeroLedgerForwarder"],
   },
   InputsLib: {},
   PoseidonT3: {},
@@ -37,18 +34,15 @@ const config = {
       dynamicAddress("Spend161Verifier"),
     ],
   },
+  Manager: {},
+  Forwarder: {},
   Vault: {
-    proxy: {
-      type: SupportedProxies.UUPS,
-      unsafeAllow: ["external-library-linking"],
-    },
     options: {
       libs: {
         PoseidonT3: dynamicAddress("PoseidonT3"),
         InputsLib: dynamicAddress("InputsLib"),
       },
     },
-    args: [dynamicAddress("Verifiers"), dynamicAddress("ERC2771Forwarder")],
   },
 };
 

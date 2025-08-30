@@ -6,6 +6,8 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
+import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+
 // not upgradable contracts & interfaces
 
 // solhint-disable-next-line no-unused-imports
@@ -40,13 +42,19 @@ interface IVaultEvents {
  * @title Vault
  * @dev A contract that manages ERC20 tokens with commitments and ZK proofs for deposits, withdrawals, and spending
  */
-contract Vault is Initializable, UUPSUpgradeable, AccessControlUpgradeable, ReentrancyGuardUpgradeable, IVaultEvents {
+contract Vault is
+  Initializable,
+  UUPSUpgradeable,
+  AccessControlUpgradeable,
+  ReentrancyGuardUpgradeable,
+  PausableUpgradeable,
+  IVaultEvents
+{
   struct State {
     // Mapping to track if a commitment hash has been deposited
     mapping(address => mapping(uint256 => Commitment)) commitmentsMap;
     Verifiers verifiers;
     address trustedForwarder;
-    bool frozen;
     Manager manager;
   }
 
@@ -69,6 +77,7 @@ contract Vault is Initializable, UUPSUpgradeable, AccessControlUpgradeable, Reen
     __AccessControl_init();
     __UUPSUpgradeable_init();
     __ReentrancyGuard_init();
+    __Pausable_init();
     __vault_init_unchained(verifiers, trustedForwarder, manager);
 
     _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -76,7 +85,7 @@ contract Vault is Initializable, UUPSUpgradeable, AccessControlUpgradeable, Reen
     _grantRole(Roles.SECURITY_COUNCIL, msg.sender);
   }
 
-  function upgradeCallBack(address verifiers, address trustedForwarder, address manager) external reinitializer(3) {
+  function upgradeCallBack(address verifiers, address trustedForwarder, address manager) external reinitializer(4) {
     __vault_init_unchained(verifiers, trustedForwarder, manager);
   }
 
@@ -87,15 +96,6 @@ contract Vault is Initializable, UUPSUpgradeable, AccessControlUpgradeable, Reen
     $.trustedForwarder = trustedForwarder;
     $.manager = Manager(manager);
     $.verifiers = Verifiers(verifiers);
-  }
-
-  modifier onlyActive() {
-    require(_getStorage().frozen == false, "Vault is frozen");
-    _;
-  }
-
-  function freeze() external onlyRole(Roles.SECURITY_COUNCIL) {
-    _getStorage().frozen = true;
   }
 
   /**
@@ -147,10 +147,22 @@ contract Vault is Initializable, UUPSUpgradeable, AccessControlUpgradeable, Reen
     return 20;
   }
 
+  function pause() external onlyRole(Roles.SECURITY_COUNCIL) {
+    _pause();
+  }
+
+  function unpause() external onlyRole(Roles.SECURITY_COUNCIL) {
+    _unpause();
+  }
+
   /**
    * @dev Deposit tokens with commitments and ZK proof validation
    */
-  function deposit(DepositParams calldata depositParams, uint256[24] calldata proof) external nonReentrant onlyActive {
+  function deposit(DepositParams calldata depositParams, uint256[24] calldata proof)
+    external
+    nonReentrant
+    whenNotPaused
+  {
     State storage $ = _getStorage();
     address token = depositParams.token;
     uint256 total_deposit_amount = depositParams.total_deposit_amount;
@@ -243,7 +255,7 @@ contract Vault is Initializable, UUPSUpgradeable, AccessControlUpgradeable, Reen
    * @dev Spend commitments by creating new ones (supports multiple inputs and outputs)
    */
   // solhint-disable-next-line code-complexity
-  function spend(Transaction calldata transaction, uint256[24] calldata proof) external nonReentrant onlyActive {
+  function spend(Transaction calldata transaction, uint256[24] calldata proof) external nonReentrant whenNotPaused {
     require(transaction.token != address(0), "Vault: Invalid token address");
     require(transaction.inputsPoseidonHashes.length > 0, "Vault: No inputs provided");
     require(transaction.outputsPoseidonHashes.length > 0, "Vault: No outputs provided");

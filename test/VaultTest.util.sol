@@ -72,7 +72,7 @@ contract VaultTest is Test {
     zeroLedgerForwarder.initialize(address(mockManager));
 
     ERC1967Proxy vaultProxy = new ERC1967Proxy(address(new Vault()), "");
-    
+
     vault = Vault(address(vaultProxy));
     vault.initialize(address(verifiers), address(forwarderProxy), address(mockManager));
     mockToken = new MockERC20("Test Token", "TEST");

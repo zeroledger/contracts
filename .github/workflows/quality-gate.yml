@@ -52,4 +52,4 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           foundry: true
-      - run: npm run unit:all
+      - run: npm run unit

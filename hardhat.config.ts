@@ -34,7 +34,7 @@ export default {
     path: "./abi",
     runOnCompile: false,
     clear: true,
-    only: ["Vault", "MockERC20", "ERC2771Forwarder"],
+    only: ["Vault", "MockERC20", "Forwarder", "Manager"],
     flat: true,
     spacing: 2,
     format: "json",

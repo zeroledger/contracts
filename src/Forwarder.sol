@@ -6,7 +6,7 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {ERC2771ForwarderUpgradeable} from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ForwarderUpgradeable.sol";
-import {Roles} from "src/Roles.lib.sol";
+import {RolesLib} from "src/Roles.lib.sol";
 import {Manager} from "src/Manager.sol";
 
 /**
@@ -32,19 +32,19 @@ contract Forwarder is Initializable, UUPSUpgradeable, AccessControlUpgradeable, 
     _disableInitializers();
   }
 
-  function initialize(address manager) public initializer {
+  function initialize(address manager, address admin, address maintainer) public initializer {
     __AccessControl_init();
     __UUPSUpgradeable_init();
     __ERC2771Forwarder_init("ZeroLedgerForwarder");
     __forwarder_init_unchained(manager);
 
-    _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-    _grantRole(Roles.MAINTAINER, msg.sender);
+    _grantRole(DEFAULT_ADMIN_ROLE, admin);
+    _grantRole(RolesLib.MAINTAINER, maintainer);
   }
 
   function upgradeCallBack() external reinitializer(0) {}
 
-  function _authorizeUpgrade(address newImplementation) internal override onlyRole(Roles.MAINTAINER) {}
+  function _authorizeUpgrade(address newImplementation) internal override onlyRole(RolesLib.MAINTAINER) {}
 
   function __forwarder_init_unchained(address manager) internal {
     _getStorage().manager = Manager(manager);

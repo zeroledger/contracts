@@ -4,7 +4,7 @@ pragma solidity >=0.8.21;
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import {Roles} from "src/Roles.lib.sol";
+import {RolesLib} from "src/Roles.lib.sol";
 
 /**
  * Manages fee floors and paymasters
@@ -30,33 +30,33 @@ contract Manager is Initializable, UUPSUpgradeable, AccessControlUpgradeable {
     _disableInitializers();
   }
 
-  function initialize(address defaultPaymaster) public initializer {
+  function initialize(address defaultPaymaster, address admin, address maintainer, address securityCouncil) public initializer {
     __AccessControl_init();
     __UUPSUpgradeable_init();
     __manager_init_unchained(defaultPaymaster);
 
-    _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-    _grantRole(Roles.MAINTAINER, msg.sender);
-    _grantRole(Roles.MANAGER, msg.sender);
+    _grantRole(DEFAULT_ADMIN_ROLE, admin);
+    _grantRole(RolesLib.MAINTAINER, maintainer);
+    _grantRole(RolesLib.MANAGER, securityCouncil);
   }
 
   function upgradeCallBack() external reinitializer(0) {}
 
-  function _authorizeUpgrade(address newImplementation) internal override onlyRole(Roles.MAINTAINER) {}
+  function _authorizeUpgrade(address newImplementation) internal override onlyRole(RolesLib.MAINTAINER) {}
 
   function __manager_init_unchained(address defaultPaymaster) internal {
     _getStorage().paymasters[defaultPaymaster] = true;
   }
 
-  function setFeeFloor(address token, uint240 feeFloor) external onlyRole(Roles.MANAGER) {
+  function setFeeFloor(address token, uint240 feeFloor) external onlyRole(RolesLib.MANAGER) {
     _getStorage().feeFloor[token] = feeFloor;
   }
 
-  function setPaymaster(address paymaster) public onlyRole(Roles.MANAGER) {
+  function setPaymaster(address paymaster) public onlyRole(RolesLib.MANAGER) {
     _getStorage().paymasters[paymaster] = true;
   }
 
-  function removePaymaster(address paymaster) external onlyRole(Roles.MANAGER) {
+  function removePaymaster(address paymaster) external onlyRole(RolesLib.MANAGER) {
     delete _getStorage().paymasters[paymaster];
   }
 

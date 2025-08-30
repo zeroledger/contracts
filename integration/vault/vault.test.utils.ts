@@ -190,7 +190,7 @@ export async function deployVaultFixture(): Promise<TestFixture> {
 
   // Get the manager instance through the proxy
   const manager = ManagerFactory.attach(await managerProxy.getAddress()) as Manager;
-  await manager.initialize(owner.address);
+  await manager.initialize(owner.address, owner.address, owner.address, owner.address);
 
   // Deploy forwarder implementation
   const ForwarderFactory = await ethers.getContractFactory("Forwarder");
@@ -204,7 +204,11 @@ export async function deployVaultFixture(): Promise<TestFixture> {
 
   // Get the forwarder instance through the proxy
   const zeroLedgerForwarder = ForwarderFactory.attach(await forwarderProxy.getAddress()) as Forwarder;
-  await zeroLedgerForwarder["initialize(address)"](await manager.getAddress());
+  await zeroLedgerForwarder["initialize(address,address,address)"](
+    await manager.getAddress(),
+    owner.address,
+    owner.address,
+  );
 
   // Deploy Vault implementation
   const VaultFactory = await ethers.getContractFactory("Vault", {
@@ -230,6 +234,9 @@ export async function deployVaultFixture(): Promise<TestFixture> {
     await verifiers.getAddress(),
     await zeroLedgerForwarder.getAddress(),
     await manager.getAddress(),
+    owner.address,
+    owner.address,
+    owner.address,
   );
 
   // Mint tokens to users for testing

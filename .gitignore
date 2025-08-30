@@ -8,6 +8,9 @@ out/
 cache_hardhat/
 artifacts/
 .gas-snapshot
+ignition/deployments/**/artifacts
+ignition/deployments/**/build-info
+ignition/deployments/**/journal.*
 
 # TypeChain files
 /typechain

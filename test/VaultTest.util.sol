@@ -69,12 +69,14 @@ contract VaultTest is Test {
 
     ERC1967Proxy forwarderProxy = new ERC1967Proxy(address(new Forwarder()), "");
     zeroLedgerForwarder = Forwarder(address(forwarderProxy));
-    zeroLedgerForwarder.initialize(address(mockManager));
+    zeroLedgerForwarder.initialize(address(mockManager), address(this), address(this));
 
     ERC1967Proxy vaultProxy = new ERC1967Proxy(address(new Vault()), "");
 
     vault = Vault(address(vaultProxy));
-    vault.initialize(address(verifiers), address(forwarderProxy), address(mockManager));
+    vault.initialize(
+      address(verifiers), address(forwarderProxy), address(mockManager), address(this), address(this), address(this)
+    );
     mockToken = new MockERC20("Test Token", "TEST");
 
     // Mint tokens to test addresses

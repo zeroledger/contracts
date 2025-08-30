@@ -16,7 +16,7 @@ import {Verifiers} from "src/Verifiers.sol";
 
 // libs
 import {PoseidonT3} from "poseidon-solidity/PoseidonT3.sol";
-import {Roles} from "src/Roles.lib.sol";
+import {RolesLib} from "src/Roles.lib.sol";
 import {
   Commitment,
   DepositCommitmentParams,
@@ -73,23 +73,30 @@ contract Vault is
     _disableInitializers();
   }
 
-  function initialize(address verifiers, address trustedForwarder, address manager) public initializer {
+  function initialize(
+    address verifiers,
+    address trustedForwarder,
+    address manager,
+    address admin,
+    address maintainer,
+    address securityCouncil
+  ) public initializer {
     __AccessControl_init();
     __UUPSUpgradeable_init();
     __ReentrancyGuard_init();
     __Pausable_init();
     __vault_init_unchained(verifiers, trustedForwarder, manager);
 
-    _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-    _grantRole(Roles.MAINTAINER, msg.sender);
-    _grantRole(Roles.SECURITY_COUNCIL, msg.sender);
+    _grantRole(DEFAULT_ADMIN_ROLE, admin);
+    _grantRole(RolesLib.MAINTAINER, maintainer);
+    _grantRole(RolesLib.SECURITY_COUNCIL, securityCouncil);
   }
 
   function upgradeCallBack(address verifiers, address trustedForwarder, address manager) external reinitializer(4) {
     __vault_init_unchained(verifiers, trustedForwarder, manager);
   }
 
-  function _authorizeUpgrade(address newImplementation) internal override onlyRole(Roles.MAINTAINER) {}
+  function _authorizeUpgrade(address newImplementation) internal override onlyRole(RolesLib.MAINTAINER) {}
 
   function __vault_init_unchained(address verifiers, address trustedForwarder, address manager) internal {
     State storage $ = _getStorage();
@@ -147,11 +154,11 @@ contract Vault is
     return 20;
   }
 
-  function pause() external onlyRole(Roles.SECURITY_COUNCIL) {
+  function pause() external onlyRole(RolesLib.SECURITY_COUNCIL) {
     _pause();
   }
 
-  function unpause() external onlyRole(Roles.SECURITY_COUNCIL) {
+  function unpause() external onlyRole(RolesLib.SECURITY_COUNCIL) {
     _unpause();
   }
 

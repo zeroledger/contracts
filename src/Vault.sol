@@ -92,9 +92,7 @@ contract Vault is
     _grantRole(RolesLib.SECURITY_COUNCIL, securityCouncil);
   }
 
-  function upgradeCallBack(address verifiers, address trustedForwarder, address manager) external reinitializer(4) {
-    __vault_init_unchained(verifiers, trustedForwarder, manager);
-  }
+  function upgradeCallBack() external reinitializer(1) {}
 
   function _authorizeUpgrade(address newImplementation) internal override onlyRole(RolesLib.MAINTAINER) {}
 

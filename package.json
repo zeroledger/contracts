@@ -19,10 +19,10 @@
     "format": "forge fmt src/; forge fmt test/",
     "lint": "solhint src/**/*.sol && eslint .",
     "node": "hardhat node",
-    "deploy": "npx hardhat deploy-bundle --network $(network)",
-    "deploy:hh": "npx hardhat --network hardhat deploy-bundle",
-    "deploy:localhost": "npx hardhat --network localhost deploy-bundle",
-    "deploy:t": "npx hardhat --network opSepolia deploy-bundle",
+    "deploy": "hardhat run scripts/deploy.ts --network",
+    "upgrade:vault": "hardhat ignition deploy ignition/modules/Vault.module.ts --reset --network",
+    "upgrade:forwarder": "hardhat ignition deploy ignition/modules/Forwarder.module.ts --reset --network",
+    "upgrade:manager": "hardhat ignition deploy ignition/modules/Manager.module.ts --reset --network",
     "abi": "hardhat export-abi"
   },
   "bugs": {
@@ -33,7 +33,6 @@
     "@openzeppelin/contracts-upgradeable": "^5.4.0"
   },
   "devDependencies": {
-    "@dgma/hardhat-sol-bundler": "^0.5.11",
     "@eslint/js": "^9.30.0",
     "@nomicfoundation/hardhat-foundry": "^1.2.0",
     "@nomicfoundation/hardhat-toolbox": "^6.1.0",

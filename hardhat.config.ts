@@ -6,7 +6,6 @@ import "@dgma/hardhat-sol-bundler";
 import "@openzeppelin/hardhat-upgrades";
 import "hardhat-abi-exporter";
 import { ZeroHash } from "ethers";
-import deployments from "./deployment.config";
 
 if (config.error) {
   console.error(config.error);
@@ -40,32 +39,22 @@ export default {
     format: "json",
   },
   networks: {
-    hardhat: {
-      deployment: deployments.hardhat,
-      allowUnlimitedContractSize: true,
-    },
-    localhost: {
-      deployment: deployments.localhost,
-    },
-    opSepolia: {
-      url: config?.parsed?.OP_SEPOLIA_RPC || DEFAULT_RPC,
+    hardhat: {},
+    localhost: {},
+    baseSepolia: {
+      url: config?.parsed?.BASE_SEPOLIA_RPC || DEFAULT_RPC,
       accounts: deployerAccounts,
-      deployment: deployments.opSepolia,
+      params: {
+        admin: config?.parsed?.SEPOLIA_ADMIN_ADDRESS,
+        maintainer: config?.parsed?.SEPOLIA_MAINTAINER_ADDRESS,
+        securityCouncil: config?.parsed?.SEPOLIA_SECURITY_COUNCIL_ADDRESS,
+        defaultPaymaster: config?.parsed?.SEPOLIA_DEFAULT_PAYMASTER_ADDRESS,
+      },
     },
   },
   etherscan: {
     apiKey: {
-      opSepolia: config?.parsed?.OPSCAN_API_KEY,
+      baseSepolia: config?.parsed?.BASE_API_KEY,
     },
-    customChains: [
-      {
-        network: "opSepolia",
-        chainId: 11155420,
-        urls: {
-          apiURL: "https://sepolia-optimism.etherscan.io/api",
-          browserURL: "https://sepolia-optimism.etherscan.io/",
-        },
-      },
-    ],
   },
 };

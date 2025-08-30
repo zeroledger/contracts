@@ -92,7 +92,7 @@ contract Vault is
     _grantRole(RolesLib.SECURITY_COUNCIL, securityCouncil);
   }
 
-  function upgradeCallBack() external reinitializer(1) {}
+  function upgradeCallBack() external reinitializer(2) {}
 
   function _authorizeUpgrade(address newImplementation) internal override onlyRole(RolesLib.MAINTAINER) {}
 

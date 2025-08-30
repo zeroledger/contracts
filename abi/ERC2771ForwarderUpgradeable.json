@@ -2,17 +2,6 @@
   {
     "inputs": [
       {
-        "internalType": "string",
-        "name": "name",
-        "type": "string"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "constructor"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "uint48",
         "name": "deadline",
         "type": "uint48"
@@ -108,18 +97,12 @@
   },
   {
     "inputs": [],
-    "name": "InvalidShortString",
+    "name": "InvalidInitialization",
     "type": "error"
   },
   {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "str",
-        "type": "string"
-      }
-    ],
-    "name": "StringTooLong",
+    "inputs": [],
+    "name": "NotInitializing",
     "type": "error"
   },
   {
@@ -151,6 +134,19 @@
       }
     ],
     "name": "ExecutedForwardRequest",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint64",
+        "name": "version",
+        "type": "uint64"
+      }
+    ],
+    "name": "Initialized",
     "type": "event"
   },
   {
@@ -236,7 +232,7 @@
             "type": "bytes"
           }
         ],
-        "internalType": "struct ERC2771Forwarder.ForwardRequestData",
+        "internalType": "struct ERC2771ForwarderUpgradeable.ForwardRequestData",
         "name": "request",
         "type": "tuple"
       }
@@ -286,7 +282,7 @@
             "type": "bytes"
           }
         ],
-        "internalType": "struct ERC2771Forwarder.ForwardRequestData[]",
+        "internalType": "struct ERC2771ForwarderUpgradeable.ForwardRequestData[]",
         "name": "requests",
         "type": "tuple[]"
       },
@@ -299,6 +295,19 @@
     "name": "executeBatch",
     "outputs": [],
     "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "name",
+        "type": "string"
+      }
+    ],
+    "name": "initialize",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -360,7 +369,7 @@
             "type": "bytes"
           }
         ],
-        "internalType": "struct ERC2771Forwarder.ForwardRequestData",
+        "internalType": "struct ERC2771ForwarderUpgradeable.ForwardRequestData",
         "name": "request",
         "type": "tuple"
       }

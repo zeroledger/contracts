@@ -1,0 +1,26 @@
+{
+  "version": "1.0",
+  "chainId": "84532",
+  "createdAt": 1756579210092,
+  "meta": {
+    "name": "Vault Unpause",
+    "description": "",
+    "txBuilderVersion": "1.18.0",
+    "createdFromSafeAddress": "0xCAa372ff51Ba9b1bc41fB63235a221743f60E24A",
+    "createdFromOwnerAddress": "",
+    "checksum": "0xba24faa5c81e04e111d1c6b299f92fc898ea1833939ee9c119ea354d4f7387e4"
+  },
+  "transactions": [
+    {
+      "to": "0x4381cBb0E3171aEA0eAD1127D9FA3b8c9fFfC79f",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [],
+        "name": "unpause",
+        "payable": false
+      },
+      "contractInputsValues": null
+    }
+  ]
+}

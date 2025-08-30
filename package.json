@@ -20,9 +20,6 @@
     "lint": "solhint src/**/*.sol && eslint .",
     "node": "hardhat node",
     "deploy": "hardhat run scripts/deploy.ts --network",
-    "upgrade:vault": "hardhat ignition deploy ignition/modules/Vault.module.ts --reset --network",
-    "upgrade:forwarder": "hardhat ignition deploy ignition/modules/Forwarder.module.ts --reset --network",
-    "upgrade:manager": "hardhat ignition deploy ignition/modules/Manager.module.ts --reset --network",
     "abi": "hardhat export-abi"
   },
   "bugs": {

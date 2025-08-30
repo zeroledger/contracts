@@ -30,14 +30,17 @@ contract Manager is Initializable, UUPSUpgradeable, AccessControlUpgradeable {
     _disableInitializers();
   }
 
-  function initialize(address defaultPaymaster, address admin, address maintainer, address securityCouncil) public initializer {
+  function initialize(address defaultPaymaster, address admin, address maintainer, address paymasterManager)
+    public
+    initializer
+  {
     __AccessControl_init();
     __UUPSUpgradeable_init();
     __manager_init_unchained(defaultPaymaster);
 
     _grantRole(DEFAULT_ADMIN_ROLE, admin);
     _grantRole(RolesLib.MAINTAINER, maintainer);
-    _grantRole(RolesLib.MANAGER, securityCouncil);
+    _grantRole(RolesLib.MANAGER, paymasterManager);
   }
 
   function upgradeCallBack() external reinitializer(0) {}

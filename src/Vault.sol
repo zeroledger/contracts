@@ -11,6 +11,7 @@ import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/Pau
 
 // solhint-disable-next-line no-unused-imports
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Verifiers} from "src/Verifiers.sol";
 
@@ -144,22 +145,78 @@ contract Vault is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, Pa
     return 20;
   }
 
+  /**
+   * @dev Pause all whenNotPaused modified methods
+   */
   function pause() external onlySecurityCouncil {
     _pause();
   }
 
+  /**
+   * @dev Unpause all whenNotPaused modified methods
+   */
   function unpause() external onlySecurityCouncil {
     _unpause();
   }
 
   /**
    * @dev Deposit tokens with commitments and ZK proof validation
+   * @param depositParams The deposit parameters including token, amount, and commitments
+   * @param proof The ZK proof for the deposit
    */
   function deposit(DepositParams calldata depositParams, uint256[24] calldata proof)
     external
     nonReentrant
     whenNotPaused
   {
+    State storage $ = _getStorage();
+    _deposit(depositParams, proof);
+
+    IERC20 t = IERC20(depositParams.token);
+    t.safeTransferFrom(_msgSender(), address(this), depositParams.amount);
+    t.safeTransferFrom(_msgSender(), address($.manager), $.manager.getFees(depositParams.token).deposit);
+    t.safeTransferFrom(_msgSender(), depositParams.forwarderFeeRecipient, depositParams.forwarderFee);
+    emit TokenDeposited(_msgSender(), depositParams.token, depositParams.amount);
+  }
+
+  /**
+   * @dev Deposit tokens with commitments and ZK proof validation using ERC20 permit
+   * @param depositParams The deposit parameters including token, amount, and commitments
+   * @param proof The ZK proof for the deposit
+   * @param deadline The deadline for the permit
+   * @param v The recovery id of the permit signature
+   * @param r The r component of the permit signature
+   * @param s The s component of the permit signature
+   */
+  function depositWithPermit(
+    DepositParams calldata depositParams,
+    uint256[24] calldata proof,
+    uint256 deadline,
+    uint8 v,
+    bytes32 r,
+    bytes32 s
+  ) external nonReentrant whenNotPaused {
+    require(deadline >= block.timestamp, "Vault: Permit expired");
+    State storage $ = _getStorage();
+    _deposit(depositParams, proof);
+    uint256 depositFee = $.manager.getFees(depositParams.token).deposit;
+
+    // Execute the permit to set allowance
+    IERC20Permit(depositParams.token).permit(
+      _msgSender(), address(this), depositParams.amount + depositFee + depositParams.forwarderFee, deadline, v, r, s
+    );
+
+    IERC20 t = IERC20(depositParams.token);
+
+    // Transfer tokens using the permit allowance
+    t.safeTransferFrom(_msgSender(), address(this), depositParams.amount);
+    t.safeTransferFrom(_msgSender(), address($.manager), depositFee);
+    t.safeTransferFrom(_msgSender(), depositParams.forwarderFeeRecipient, depositParams.forwarderFee);
+
+    emit TokenDeposited(_msgSender(), depositParams.token, depositParams.amount);
+  }
+
+  function _deposit(DepositParams calldata depositParams, uint256[24] calldata proof) internal {
     State storage $ = _getStorage();
     address token = depositParams.token;
     uint256 amount = depositParams.amount;
@@ -184,12 +241,6 @@ contract Vault is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, Pa
         depositCommitmentParams[i].owner, token, poseidonHash, depositCommitmentParams[i].metadata
       );
     }
-
-    IERC20 t = IERC20(token);
-    t.safeTransferFrom(_msgSender(), address(this), amount);
-    t.safeTransferFrom(_msgSender(), address($.manager), $.manager.getFees(token).deposit);
-    t.safeTransferFrom(_msgSender(), depositParams.forwarderFeeRecipient, depositParams.forwarderFee);
-    emit TokenDeposited(_msgSender(), token, amount);
   }
 
   /**

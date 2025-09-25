@@ -14,6 +14,7 @@ import {MockERC20} from "src/helpers/MockERC20.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {MockVerifier} from "./mocks/MockVerifier.sol";
 import {DepositParams, DepositCommitmentParams} from "src/Vault.types.sol";
+import {PermitUtils} from "./Permit.util.sol";
 
 // solhint-disable max-states-count
 contract VaultTest is Test {
@@ -33,9 +34,14 @@ contract VaultTest is Test {
   Forwarder internal zeroLedgerForwarder;
   MockERC20 internal mockToken;
   ProtocolManager internal protocolManager;
-  address internal alice = address(0x1);
-  address internal bob = address(0x2);
-  address internal charlie = address(0x3);
+  PermitUtils internal permitUtils;
+  address internal alice;
+  address internal bob;
+  address internal charlie;
+  uint256 internal alicePrivateKey;
+  uint256 internal bobPrivateKey;
+  uint256 internal charliePrivateKey;
+  mapping(address => uint256) internal signerToPrivateKey;
 
   function baseSetup() internal {
     depositVerifier = new MockVerifier();
@@ -79,6 +85,15 @@ contract VaultTest is Test {
     vault = Vault(address(vaultProxy));
     vault.initialize(address(verifiers), address(zeroLedgerForwarder), address(protocolManager));
     mockToken = new MockERC20("Test Token", "TEST");
+    permitUtils = new PermitUtils(mockToken.DOMAIN_SEPARATOR());
+
+    // Create deterministic test accounts with private keys for signing
+    (alice, alicePrivateKey) = makeAddrAndKey("alice");
+    (bob, bobPrivateKey) = makeAddrAndKey("bob");
+    (charlie, charliePrivateKey) = makeAddrAndKey("charlie");
+    signerToPrivateKey[alice] = alicePrivateKey;
+    signerToPrivateKey[bob] = bobPrivateKey;
+    signerToPrivateKey[charlie] = charliePrivateKey;
 
     // Mint tokens to test addresses
     mockToken.mint(alice, 1000e18);
@@ -92,6 +107,22 @@ contract VaultTest is Test {
       proof[i] = i + 1;
     }
     return proof;
+  }
+
+  function doPermit(address signer, address spender, uint256 value, uint256 nonce, uint256 deadline)
+    internal
+    view
+    returns (PermitUtils.Signature memory)
+  {
+    PermitUtils.Permit memory _permit =
+      PermitUtils.Permit({owner: signer, spender: spender, value: value, nonce: nonce, deadline: deadline});
+
+    bytes32 digest = permitUtils.getTypedDataHash(_permit);
+
+    uint256 signerPrivateKey = signerToPrivateKey[signer];
+    require(signerPrivateKey != 0, "unknown signer");
+    (uint8 v, bytes32 r, bytes32 s) = vm.sign(signerPrivateKey, digest);
+    return PermitUtils.Signature(v, r, s);
   }
 
   // Helper function to create a deposit
@@ -126,6 +157,45 @@ contract VaultTest is Test {
     vm.startPrank(user);
     mockToken.approve(address(vault), uint256(depositAmount + fee + forwarderFee));
     vault.deposit(depositParams, proof);
+    vm.stopPrank();
+  }
+
+  // Helper function to create a deposit using permit (native permit support)
+  function createDepositWithPermit(
+    address user,
+    uint240 depositAmount,
+    uint240 fee,
+    uint240 forwarderFee,
+    uint256[3] memory poseidonHashes,
+    address[3] memory owners
+  ) internal {
+    depositVerifier.setVerificationResult(true);
+
+    DepositCommitmentParams[3] memory commitmentParams;
+    commitmentParams[0] =
+      DepositCommitmentParams({poseidonHash: poseidonHashes[0], owner: owners[0], metadata: "metadata1"});
+    commitmentParams[1] =
+      DepositCommitmentParams({poseidonHash: poseidonHashes[1], owner: owners[1], metadata: "metadata2"});
+    commitmentParams[2] =
+      DepositCommitmentParams({poseidonHash: poseidonHashes[2], owner: owners[2], metadata: "metadata3"});
+
+    DepositParams memory depositParams = DepositParams({
+      token: address(mockToken),
+      amount: depositAmount,
+      depositCommitmentParams: commitmentParams,
+      forwarderFee: forwarderFee,
+      forwarderFeeRecipient: address(zeroLedgerForwarder)
+    });
+
+    uint256[24] memory proof = getDummyProof();
+
+    vm.startPrank(user);
+    // Create permit signature
+    PermitUtils.Signature memory signature =
+      doPermit(user, address(vault), uint256(depositAmount + fee + forwarderFee), 0, block.timestamp + 1000);
+
+    // Use the new depositWithPermit method
+    vault.depositWithPermit(depositParams, proof, block.timestamp + 1000, signature.v, signature.r, signature.s);
     vm.stopPrank();
   }
 }

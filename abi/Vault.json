@@ -379,6 +379,88 @@
   {
     "inputs": [
       {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "token",
+            "type": "address"
+          },
+          {
+            "internalType": "uint240",
+            "name": "amount",
+            "type": "uint240"
+          },
+          {
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "poseidonHash",
+                "type": "uint256"
+              },
+              {
+                "internalType": "address",
+                "name": "owner",
+                "type": "address"
+              },
+              {
+                "internalType": "bytes",
+                "name": "metadata",
+                "type": "bytes"
+              }
+            ],
+            "internalType": "struct DepositCommitmentParams[3]",
+            "name": "depositCommitmentParams",
+            "type": "tuple[3]"
+          },
+          {
+            "internalType": "uint240",
+            "name": "forwarderFee",
+            "type": "uint240"
+          },
+          {
+            "internalType": "address",
+            "name": "forwarderFeeRecipient",
+            "type": "address"
+          }
+        ],
+        "internalType": "struct DepositParams",
+        "name": "depositParams",
+        "type": "tuple"
+      },
+      {
+        "internalType": "uint256[24]",
+        "name": "proof",
+        "type": "uint256[24]"
+      },
+      {
+        "internalType": "uint256",
+        "name": "deadline",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint8",
+        "name": "v",
+        "type": "uint8"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "r",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "s",
+        "type": "bytes32"
+      }
+    ],
+    "name": "depositWithPermit",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "address",
         "name": "token",
         "type": "address"

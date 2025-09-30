@@ -3,10 +3,10 @@ pragma solidity >=0.8.21;
 
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import {RolesLib} from "src/Roles.lib.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {AccessManagedUpgradeable} from
+  "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 
 struct Fees {
   uint240 deposit;
@@ -14,26 +14,19 @@ struct Fees {
   uint240 withdraw;
 }
 
-interface IProtocolManagerEvents {
+interface IProtocolEvents {
   event FeesChanged(address indexed token, Fees indexed fees);
-  event UpgradeApproved(address indexed proxy, address indexed implementation);
   event SetMaxTVL(address indexed token, uint240 indexed maxTVL);
 }
 
 /**
- * @dev Contract to manage protocol contracts, such as Forwarder or Vault
- * Roles Description:
- * ADMIN - multisig 3/5 wallet, upgrades ProtocolManager contract, grand / suspend roles
- * TREASURE_MANAGER - multisig 2/3 wallet to manage protocol tokenomics
- * SECURITY_COUNCIL - multisig 2/3 wallet to pause/unpause critical protocol functionality
- * MAINTAINER - multisig 2/3 wallet to approve dependant contract upgrades
+ * @dev Contract to manage protocol parameters
  */
-contract ProtocolManager is Initializable, UUPSUpgradeable, AccessControlUpgradeable, IProtocolManagerEvents {
+contract ProtocolManager is Initializable, UUPSUpgradeable, IProtocolEvents, AccessManagedUpgradeable {
   using SafeERC20 for IERC20;
 
   struct State {
     mapping(address => Fees) fees;
-    mapping(address => address) approvedImplementation;
     mapping(address => uint240) maxTVL;
   }
 
@@ -57,42 +50,26 @@ contract ProtocolManager is Initializable, UUPSUpgradeable, AccessControlUpgrade
     _disableInitializers();
   }
 
-  function initialize(address admin, address securityCouncil, address treasureManager) public initializer {
-    __AccessControl_init();
+  function initialize(address initialAuthority) public initializer {
     __UUPSUpgradeable_init();
-    __manager_init_unchained(admin, securityCouncil, treasureManager);
+    __AccessManaged_init(initialAuthority);
+    __protocol_init_unchained();
   }
 
   function upgradeCallBack() external reinitializer(0) {}
 
-  function _authorizeUpgrade(address newImplementation) internal override onlyRole(DEFAULT_ADMIN_ROLE) {}
+  function __protocol_init_unchained() internal {}
 
-  function __manager_init_unchained(address admin, address securityCouncil, address treasureManager) internal {
-    _grantRole(DEFAULT_ADMIN_ROLE, admin);
-    _grantRole(RolesLib.MAINTAINER, admin);
-    _grantRole(RolesLib.SECURITY_COUNCIL, securityCouncil);
-    _grantRole(RolesLib.TREASURE_MANAGER, treasureManager);
-  }
-
-  /* Upgrades Approval */
-
-  function approveUpgrade(address uupsProxy, address newImplementation) external onlyRole(RolesLib.MAINTAINER) {
-    _getStorage().approvedImplementation[uupsProxy] = newImplementation;
-    emit UpgradeApproved(uupsProxy, newImplementation);
-  }
-
-  function isImplementationApproved(address uupsProxy, address newImplementation) external view returns (bool) {
-    return _getStorage().approvedImplementation[uupsProxy] == newImplementation;
-  }
+  function _authorizeUpgrade(address newImplementation) internal override restricted {}
 
   /* Fees */
 
-  function setFees(address token, Fees calldata fees) external onlyRole(RolesLib.TREASURE_MANAGER) {
+  function setFees(address token, Fees calldata fees) external restricted {
     _getStorage().fees[token] = fees;
     emit FeesChanged(token, fees);
   }
 
-  function transferFees(address token, address recipient) external onlyRole(RolesLib.TREASURE_MANAGER) {
+  function transferFees(address token, address recipient) external restricted {
     IERC20(token).safeTransfer(recipient, IERC20(token).balanceOf(address(this)));
   }
 
@@ -102,7 +79,7 @@ contract ProtocolManager is Initializable, UUPSUpgradeable, AccessControlUpgrade
 
   /* Max TVL */
 
-  function setMaxTVL(address token, uint240 maxTVL) external onlyRole(RolesLib.SECURITY_COUNCIL) {
+  function setMaxTVL(address token, uint240 maxTVL) external restricted {
     _getStorage().maxTVL[token] = maxTVL;
     emit SetMaxTVL(token, maxTVL);
   }

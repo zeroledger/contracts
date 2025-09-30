@@ -20,6 +20,7 @@
     "lint": "solhint src/**/*.sol && eslint .",
     "node": "hardhat node",
     "deploy": "hardhat run scripts/deploy.ts --network",
+    "deploy:consistent": "hardhat run scripts/deploy.ts --strategy create2 --network",
     "abi": "hardhat export-abi",
     "prepareFeesParams": "hardhat run scripts/protocolManager/prepareFeesParams.ts --network"
   },

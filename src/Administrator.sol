@@ -13,14 +13,15 @@ import {RolesLib} from "src/Roles.lib.sol";
  * MAINTAINER - multisig 2/3 wallet to approve dependant contract upgrades
  */
 contract Administrator is AccessManager {
-  constructor(address admin, address securityCouncil, address treasureManager, uint32 defaultGrantDelay)
-    AccessManager(admin)
-  {
-    _grantRole(RolesLib.MAINTAINER, admin, 0, 5 days);
+  constructor(
+    address admin,
+    address maintainer,
+    address securityCouncil,
+    address treasureManager,
+    uint32 defaultGrantDelay
+  ) AccessManager(admin) {
+    _grantRole(RolesLib.MAINTAINER, maintainer, 0, defaultGrantDelay);
     _grantRole(RolesLib.SECURITY_COUNCIL, securityCouncil, 0, 0);
     _grantRole(RolesLib.TREASURE_MANAGER, treasureManager, 0, 0);
-    setGrantDelay(RolesLib.MAINTAINER, defaultGrantDelay);
-    setGrantDelay(RolesLib.SECURITY_COUNCIL, defaultGrantDelay);
-    setGrantDelay(RolesLib.TREASURE_MANAGER, defaultGrantDelay);
   }
 }

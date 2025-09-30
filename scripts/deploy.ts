@@ -14,6 +14,7 @@ async function main() {
     hre.network.config as unknown as {
       params?: {
         admin: string;
+        maintainer: string;
         treasureManager: string;
         securityCouncil: string;
       };
@@ -21,27 +22,29 @@ async function main() {
   ).params;
 
   const admin = params?.admin ?? deployer.address;
+  const maintainer = params?.maintainer ?? deployer.address;
   const treasureManager = params?.treasureManager ?? deployer.address;
   const securityCouncil = params?.securityCouncil ?? deployer.address;
 
   console.log(`Deploying with params:
   admin: ${admin}
+  maintainer: ${maintainer}
   treasureManager: ${treasureManager}
   securityCouncil: ${securityCouncil}
   `);
 
-  const { mockERC20, inputsLib, poseidonT3, verifiers, vault, forwarder, protocolManager } = await hre.ignition.deploy(
-    ProxyModule,
-    {
+  const { mockERC20, inputsLib, poseidonT3, verifiers, vault, forwarder, protocolManager, administrator } =
+    await hre.ignition.deploy(ProxyModule, {
       parameters: {
-        Proxy: {
+        Administrator: {
           admin: admin,
+          maintainer: maintainer,
           treasureManager: treasureManager,
           securityCouncil: securityCouncil,
+          defaultUpgradeDelay: 6 * 60 * 60,
         },
       },
-    },
-  );
+    });
 
   const [
     mockERC20Address,
@@ -51,6 +54,7 @@ async function main() {
     vaultAddress,
     forwarderAddress,
     protocolManagerAddress,
+    administratorAddress,
   ] = await Promise.all([
     mockERC20.getAddress(),
     inputsLib.getAddress(),
@@ -59,6 +63,7 @@ async function main() {
     vault.getAddress(),
     forwarder.getAddress(),
     protocolManager.getAddress(),
+    administrator.getAddress(),
   ]);
 
   console.log(`Contracts deployed. Addresses:
@@ -70,6 +75,7 @@ async function main() {
   vault: ${vaultAddress}
   forwarder: ${forwarderAddress}
   protocolManager: ${protocolManagerAddress}
+  administrator: ${administratorAddress}
   `);
 
   console.log(`Checking initialization of contracts...`);

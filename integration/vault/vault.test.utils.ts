@@ -11,7 +11,7 @@ import {
   Vault,
 } from "../../typechain-types/src/Vault.sol/Vault";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import { Forwarder, Verifiers } from "../../typechain-types/src";
+import { Administrator, Forwarder, Verifiers } from "../../typechain-types/src";
 import { ProtocolManager } from "../../typechain-types/src/ProtocolManager";
 import { MockERC20 } from "../../typechain-types/src/helpers/MockERC20";
 import ProxyModule from "../../ignition/modules/Proxy.module";
@@ -56,6 +56,7 @@ export interface TestFixture {
   forwarder: Forwarder; // Add zeroLedgerForwarder for meta-tx tests
   protocolManager: ProtocolManager;
   forwarderFeeRecipient: string;
+  administrator: Administrator;
 }
 
 // Types for withdraw testing
@@ -104,12 +105,14 @@ const mockMetadata = randomBytes(32);
 export async function deployVaultFixture(): Promise<TestFixture> {
   const [owner, user, otherUser, forwarderFeeRecipient] = await ethers.getSigners();
 
-  const { verifiers, vault, forwarder, protocolManager } = await ignition.deploy(ProxyModule, {
+  const { verifiers, vault, forwarder, protocolManager, administrator } = await ignition.deploy(ProxyModule, {
     parameters: {
-      Proxy: {
+      Administrator: {
         admin: owner.address,
+        maintainer: owner.address,
         treasureManager: owner.address,
         securityCouncil: owner.address,
+        defaultUpgradeDelay: 12 * 60 * 60,
       },
     },
   });
@@ -140,6 +143,7 @@ export async function deployVaultFixture(): Promise<TestFixture> {
     user,
     otherUser,
     forwarder: forwarder as unknown as Forwarder, // Export the forwarder for meta-tx tests
+    administrator: administrator as unknown as Administrator,
     protocolManager: protocolManager as unknown as ProtocolManager,
     forwarderFeeRecipient: forwarderFeeRecipient.address,
   };

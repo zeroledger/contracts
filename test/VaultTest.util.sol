@@ -74,7 +74,9 @@ contract VaultTest is Test {
     mockToken = new MockERC20("Test Token", "TEST");
     permitUtils = new PermitUtils(mockToken.DOMAIN_SEPARATOR());
 
-    Administrator administrator = new Administrator(address(this), address(this), address(this), 5 days);
+    address runner = address(this);
+
+    Administrator administrator = new Administrator(runner, runner, runner, runner, 5 days);
 
     ERC1967Proxy protocolManagerProxy = new ERC1967Proxy(address(new ProtocolManager()), "");
     protocolManager = ProtocolManager(address(protocolManagerProxy));

@@ -85,6 +85,7 @@ contract VaultTest is Test {
     vault = Vault(address(vaultProxy));
     vault.initialize(address(verifiers), address(zeroLedgerForwarder), address(protocolManager));
     mockToken = new MockERC20("Test Token", "TEST");
+    protocolManager.setMaxTVL(address(mockToken), type(uint240).max);
     permitUtils = new PermitUtils(mockToken.DOMAIN_SEPARATOR());
 
     // Create deterministic test accounts with private keys for signing

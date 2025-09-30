@@ -169,11 +169,11 @@ contract Vault is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, Pa
     nonReentrant
     whenNotPaused
   {
-    State storage $ = _getStorage();
     _deposit(depositParams, proof);
 
     IERC20 t = IERC20(depositParams.token);
     t.safeTransferFrom(_msgSender(), address(this), depositParams.amount);
+    State storage $ = _getStorage();
     t.safeTransferFrom(_msgSender(), address($.manager), $.manager.getFees(depositParams.token).deposit);
     t.safeTransferFrom(_msgSender(), depositParams.forwarderFeeRecipient, depositParams.forwarderFee);
     emit TokenDeposited(_msgSender(), depositParams.token, depositParams.amount);
@@ -197,8 +197,8 @@ contract Vault is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, Pa
     bytes32 s
   ) external nonReentrant whenNotPaused {
     require(deadline >= block.timestamp, "Vault: Permit expired");
-    State storage $ = _getStorage();
     _deposit(depositParams, proof);
+    State storage $ = _getStorage();
     uint256 depositFee = $.manager.getFees(depositParams.token).deposit;
 
     // Execute the permit to set allowance
@@ -223,6 +223,8 @@ contract Vault is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, Pa
     DepositCommitmentParams[3] calldata depositCommitmentParams = depositParams.depositCommitmentParams;
     require(token != address(0), "Vault: Invalid token address");
     require(amount > 0, "Vault: Amount must be greater than 0");
+    uint240 maxTVL = $.manager.getMaxTVL(token);
+    require(IERC20(token).balanceOf(address(this)) + amount <= maxTVL, "Vault: Amount exceeds max TVL");
     require(
       $.verifiers.depositVerifier().verify(proof, InputsLib.depositInputs(depositCommitmentParams, amount)),
       "Vault: Invalid ZK proof"

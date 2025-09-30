@@ -39,7 +39,7 @@ contract Forwarder is Initializable, UUPSUpgradeable, ERC2771ForwarderUpgradeabl
     __forwarder_init_unchained(manager);
   }
 
-  function upgradeCallBack() external reinitializer(1) {}
+  function upgradeCallBack() external reinitializer(0) {}
 
   function _authorizeUpgrade(address newImplementation) internal view override {
     require(

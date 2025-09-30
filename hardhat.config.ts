@@ -5,7 +5,7 @@ import "@nomicfoundation/hardhat-toolbox";
 import "@openzeppelin/hardhat-upgrades";
 import "@nomicfoundation/hardhat-foundry";
 import "hardhat-abi-exporter";
-import { ZeroHash, getBytes, getAddress, keccak256, hexlify, concat } from "ethers";
+import { ZeroHash, getBytes, id, hexlify, concat, Wallet } from "ethers";
 
 if (config.error) {
   console.error(config.error);
@@ -16,9 +16,9 @@ const deployerAccounts = [config?.parsed?.PRIVATE_KEY || ZeroHash];
 const DEFAULT_RPC = "https:random.com";
 
 function mkCreateXSalt() {
-  const addr20 = getBytes(getAddress(deployerAccounts[0])); // 20 bytes
+  const addr20 = getBytes(new Wallet(deployerAccounts[0]).address); // 20 bytes
   const flag1 = getBytes("0x01"); // 1 byte
-  const rnd11 = keccak256("zeroledger");
+  const rnd11 = getBytes(id("zeroledger"));
   const salt = hexlify(concat([addr20, flag1, rnd11])); // 32 bytes hex
   console.log("CreateX salt:", salt);
   return salt;

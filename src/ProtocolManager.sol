@@ -16,7 +16,8 @@ struct Fees {
 
 interface IProtocolManagerEvents {
   event FeesChanged(address indexed token, Fees indexed fees);
-  event UpgradeApproved(address proxy, address implementation);
+  event UpgradeApproved(address indexed proxy, address indexed implementation);
+  event SetMaxTVL(address indexed token, uint240 indexed maxTVL);
 }
 
 /**
@@ -33,6 +34,7 @@ contract ProtocolManager is Initializable, UUPSUpgradeable, AccessControlUpgrade
   struct State {
     mapping(address => Fees) fees;
     mapping(address => address) approvedImplementation;
+    mapping(address => uint240) maxTVL;
   }
 
   // keccak256(abi.encode(uint256(keccak256("storage.zeroledger.manager")) - 1)) & ~bytes32(uint256(0xff))
@@ -45,6 +47,11 @@ contract ProtocolManager is Initializable, UUPSUpgradeable, AccessControlUpgrade
     }
   }
 
+  modifier onlyPercentages(uint256 percentage) {
+    require(percentage <= 100, "Percentage must be less than or equal to 100");
+    _;
+  }
+
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
     _disableInitializers();
@@ -53,28 +60,21 @@ contract ProtocolManager is Initializable, UUPSUpgradeable, AccessControlUpgrade
   function initialize(address admin, address securityCouncil, address treasureManager) public initializer {
     __AccessControl_init();
     __UUPSUpgradeable_init();
-    __manager_init_unchained();
+    __manager_init_unchained(admin, securityCouncil, treasureManager);
+  }
 
+  function upgradeCallBack() external reinitializer(0) {}
+
+  function _authorizeUpgrade(address newImplementation) internal override onlyRole(DEFAULT_ADMIN_ROLE) {}
+
+  function __manager_init_unchained(address admin, address securityCouncil, address treasureManager) internal {
     _grantRole(DEFAULT_ADMIN_ROLE, admin);
     _grantRole(RolesLib.MAINTAINER, admin);
     _grantRole(RolesLib.SECURITY_COUNCIL, securityCouncil);
     _grantRole(RolesLib.TREASURE_MANAGER, treasureManager);
   }
 
-  function upgradeCallBack() external reinitializer(1) {}
-
-  function _authorizeUpgrade(address newImplementation) internal override onlyRole(DEFAULT_ADMIN_ROLE) {}
-
-  function __manager_init_unchained() internal {}
-
-  function setFees(address token, Fees calldata fees) external onlyRole(RolesLib.TREASURE_MANAGER) {
-    _getStorage().fees[token] = fees;
-    emit FeesChanged(token, fees);
-  }
-
-  function transferFees(address token, address recipient) external onlyRole(RolesLib.TREASURE_MANAGER) {
-    IERC20(token).safeTransfer(recipient, IERC20(token).balanceOf(address(this)));
-  }
+  /* Upgrades Approval */
 
   function approveUpgrade(address uupsProxy, address newImplementation) external onlyRole(RolesLib.MAINTAINER) {
     _getStorage().approvedImplementation[uupsProxy] = newImplementation;
@@ -85,7 +85,29 @@ contract ProtocolManager is Initializable, UUPSUpgradeable, AccessControlUpgrade
     return _getStorage().approvedImplementation[uupsProxy] == newImplementation;
   }
 
+  /* Fees */
+
+  function setFees(address token, Fees calldata fees) external onlyRole(RolesLib.TREASURE_MANAGER) {
+    _getStorage().fees[token] = fees;
+    emit FeesChanged(token, fees);
+  }
+
+  function transferFees(address token, address recipient) external onlyRole(RolesLib.TREASURE_MANAGER) {
+    IERC20(token).safeTransfer(recipient, IERC20(token).balanceOf(address(this)));
+  }
+
   function getFees(address token) external view returns (Fees memory) {
     return _getStorage().fees[token];
+  }
+
+  /* Max TVL */
+
+  function setMaxTVL(address token, uint240 maxTVL) external onlyRole(RolesLib.SECURITY_COUNCIL) {
+    _getStorage().maxTVL[token] = maxTVL;
+    emit SetMaxTVL(token, maxTVL);
+  }
+
+  function getMaxTVL(address token) external view returns (uint240) {
+    return _getStorage().maxTVL[token];
   }
 }

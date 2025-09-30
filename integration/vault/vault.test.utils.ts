@@ -130,6 +130,8 @@ export async function deployVaultFixture(): Promise<TestFixture> {
     withdraw: ethers.parseEther("5"),
   });
 
+  await protocolManager.setMaxTVL(await mockToken.getAddress(), ethers.parseEther("10000"));
+
   return {
     vault: vault as unknown as Vault,
     mockToken,

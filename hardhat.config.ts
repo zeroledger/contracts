@@ -63,14 +63,26 @@ export default {
       accounts: deployerAccounts,
       params: {
         admin: config?.parsed?.TESTNET_ADMIN_ADDRESS,
+        maintainer: config?.parsed?.TESTNET_MAINTAINER_ADDRESS,
         treasureManager: config?.parsed?.TESTNET_TREASURE_MANAGER_ADDRESS,
         securityCouncil: config?.parsed?.TESTNET_SECURITY_COUNCIL_ADDRESS,
+      },
+    },
+    base: {
+      url: config?.parsed?.BASE_RPC || DEFAULT_RPC,
+      accounts: deployerAccounts,
+      params: {
+        admin: config?.parsed?.ADMIN_ADDRESS,
+        maintainer: config?.parsed?.MAINTAINER_ADDRESS,
+        treasureManager: config?.parsed?.TREASURE_MANAGER_ADDRESS,
+        securityCouncil: config?.parsed?.SECURITY_COUNCIL_ADDRESS,
       },
     },
   },
   etherscan: {
     apiKey: {
       baseSepolia: config?.parsed?.BASE_API_KEY,
+      base: config?.parsed?.BASE_API_KEY,
     },
   },
 };

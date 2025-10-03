@@ -15,8 +15,6 @@ const mockPk = "0xa319d638222ac86847f8f9c228ff411b3e1b68d2dc301e2ba237778475cc25
 
 const deployerAccounts = [config?.parsed?.PRIVATE_KEY || mockPk];
 
-const DEFAULT_RPC = "https:random.com";
-
 function mkCreateXSalt() {
   const addr20 = getBytes(new Wallet(deployerAccounts[0]).address); // 20 bytes
   const flag1 = getBytes("0x01"); // 1 byte
@@ -52,16 +50,34 @@ export default {
     path: "./abi",
     runOnCompile: false,
     clear: true,
-    only: ["Vault", "MockERC20", "Forwarder", "ProtocolManager"],
+    only: ["Vault", "MockERC20", "Forwarder", "ProtocolManager", "Administrator"],
     flat: true,
     spacing: 2,
     format: "json",
   },
   networks: {
-    hardhat: {},
-    localhost: {},
+    hardhat: process.env.FORK
+      ? {
+          forking: {
+            url: config?.parsed?.BASE_RPC,
+          },
+          mining: {
+            auto: true,
+            interval: 1000,
+          },
+        }
+      : {},
+    localhost: {
+      url: "http://127.0.0.1:8545",
+      params: {
+        admin: config?.parsed?.TESTNET_ADMIN_ADDRESS,
+        maintainer: config?.parsed?.TESTNET_MAINTAINER_ADDRESS,
+        treasureManager: config?.parsed?.TESTNET_TREASURE_MANAGER_ADDRESS,
+        securityCouncil: config?.parsed?.TESTNET_SECURITY_COUNCIL_ADDRESS,
+      },
+    },
     baseSepolia: {
-      url: config?.parsed?.BASE_SEPOLIA_RPC || DEFAULT_RPC,
+      url: config?.parsed?.BASE_SEPOLIA_RPC,
       accounts: deployerAccounts,
       params: {
         admin: config?.parsed?.TESTNET_ADMIN_ADDRESS,
@@ -71,7 +87,7 @@ export default {
       },
     },
     base: {
-      url: config?.parsed?.BASE_RPC || DEFAULT_RPC,
+      url: config?.parsed?.BASE_RPC,
       accounts: deployerAccounts,
       params: {
         admin: config?.parsed?.ADMIN_ADDRESS,

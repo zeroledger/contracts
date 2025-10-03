@@ -1,7 +1,5 @@
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 import MockERC20Module from "./MockERC20.module";
-import PoseidonT3Module from "./PoseidonT3.module";
-import InputsLibModule from "./InputsLib.module";
 import VerifiersModule from "./Verifiers.module";
 import VaultModule from "./Vault.module";
 import ForwarderModule from "./Forwarder.module";
@@ -10,13 +8,10 @@ import AdministratorModule from "./Administrator.module";
 
 export default buildModule("Proxy", (m) => {
   const { mockERC20 } = m.useModule(MockERC20Module);
-  const { inputsLib } = m.useModule(InputsLibModule);
-  const { poseidonT3 } = m.useModule(PoseidonT3Module);
-
   const { verifiers } = m.useModule(VerifiersModule);
   const { administrator } = m.useModule(AdministratorModule);
 
-  const { vault: vaultImplementation } = m.useModule(VaultModule);
+  const { vault: vaultImplementation, poseidonT3, inputsLib } = m.useModule(VaultModule);
   const { forwarder: forwarderImplementation } = m.useModule(ForwarderModule);
   const { protocolManager: protocolManagerImplementation } = m.useModule(ProtocolManagerModule);
 
@@ -36,8 +31,6 @@ export default buildModule("Proxy", (m) => {
 
   return {
     mockERC20,
-    inputsLib,
-    poseidonT3,
     verifiers,
     vaultImplementation,
     forwarderImplementation,
@@ -46,5 +39,7 @@ export default buildModule("Proxy", (m) => {
     forwarder,
     protocolManager,
     administrator,
+    poseidonT3,
+    inputsLib,
   };
 });

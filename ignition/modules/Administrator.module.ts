@@ -9,7 +9,7 @@ export default buildModule("Administrator", (m) => {
   const administrator = m.contract(
     "Administrator",
     [admin, maintainer, securityCouncil, treasureManager, defaultUpgradeDelay],
-    { id: `Administrator_${process.env.VERSION_TAG}` },
+    { id: `Administrator_${process.env.VERSION_TAG ?? 0}` },
   );
 
   return {

@@ -1,11 +1,21 @@
 import hre from "hardhat";
 import ProxyModule from "../ignition/modules/Proxy.module";
+import { getBytes, id, concat } from "ethers";
 
 const trueOrThrow = (condition: boolean, message: string) => {
   if (!condition) {
     throw new Error(message);
   }
 };
+
+function mkCreateXSalt(deployer: string) {
+  const addr20 = getBytes(deployer); // 20 bytes
+  const flag1 = getBytes("0x01"); // 1 byte
+  const rnd11 = getBytes(id("zeroledger"));
+  const salt = concat([addr20, flag1, rnd11]).slice(0, 66); // 32 bytes hex
+  console.log("CreateX salt:", salt);
+  return salt;
+}
 
 async function main() {
   const [deployer] = await hre.ethers.getSigners();
@@ -25,12 +35,14 @@ async function main() {
   const maintainer = params?.maintainer ?? deployer.address;
   const treasureManager = params?.treasureManager ?? deployer.address;
   const securityCouncil = params?.securityCouncil ?? deployer.address;
+  const salt = mkCreateXSalt(deployer.address);
 
   console.log(`Deploying with params:
   admin: ${admin}
   maintainer: ${maintainer}
   treasureManager: ${treasureManager}
   securityCouncil: ${securityCouncil}
+  salt: ${salt}
   `);
 
   const { mockERC20, inputsLib, poseidonT3, verifiers, vault, forwarder, protocolManager, administrator } =
@@ -43,6 +55,10 @@ async function main() {
           securityCouncil: securityCouncil,
           defaultUpgradeDelay: 6 * 60 * 60,
         },
+      },
+      strategy: hre.network.name === "hardhat" ? "basic" : "create2",
+      strategyConfig: {
+        salt,
       },
     });
 

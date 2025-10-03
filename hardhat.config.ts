@@ -5,7 +5,6 @@ import "@nomicfoundation/hardhat-toolbox";
 import "@openzeppelin/hardhat-upgrades";
 import "@nomicfoundation/hardhat-foundry";
 import "hardhat-abi-exporter";
-import { getBytes, id, hexlify, concat, Wallet } from "ethers";
 
 if (config.error) {
   console.error(config.error);
@@ -15,15 +14,6 @@ const mockRpc = "http://127.0.0.1:8545";
 const mockPk = "0xa319d638222ac86847f8f9c228ff411b3e1b68d2dc301e2ba237778475cc25e1";
 
 const deployerAccounts = [config?.parsed?.PRIVATE_KEY || mockPk];
-
-function mkCreateXSalt() {
-  const addr20 = getBytes(new Wallet(deployerAccounts[0]).address); // 20 bytes
-  const flag1 = getBytes("0x01"); // 1 byte
-  const rnd11 = getBytes(id("zeroledger"));
-  const salt = hexlify(concat([addr20, flag1, rnd11])); // 32 bytes hex
-  console.log("CreateX salt:", salt);
-  return salt;
-}
 
 export default {
   solidity: {
@@ -39,13 +29,6 @@ export default {
   paths: {
     sources: "src",
     tests: "integration",
-  },
-  ignition: {
-    strategyConfig: {
-      create2: {
-        salt: mkCreateXSalt(),
-      },
-    },
   },
   abiExporter: {
     path: "./abi",

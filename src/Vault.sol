@@ -19,7 +19,6 @@ import {AccessManagedUpgradeable} from
 
 // libs
 import {PoseidonT3} from "@poseidon-solidity/PoseidonT3.sol";
-import {RolesLib} from "src/Roles.lib.sol";
 import {
   Commitment,
   DepositCommitmentParams,

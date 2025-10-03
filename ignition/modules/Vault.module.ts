@@ -8,10 +8,12 @@ export default buildModule("Vault", (m) => {
       PoseidonT3: poseidonT3,
       InputsLib: inputsLib,
     },
-    id: `Vault_${process.env.VERSION_TAG}`,
+    id: `Vault_${process.env.VERSION_TAG ?? 0}`,
   });
 
   return {
     vault,
+    poseidonT3,
+    inputsLib,
   };
 });

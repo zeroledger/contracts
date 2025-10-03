@@ -13,5 +13,7 @@ export default buildModule("Vault", (m) => {
 
   return {
     vault,
+    poseidonT3,
+    inputsLib,
   };
 });

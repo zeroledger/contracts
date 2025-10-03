@@ -1,7 +1,7 @@
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 
 export default buildModule("ProtocolManager", (m) => {
-  const protocolManager = m.contract("ProtocolManager", [], { id: `ProtocolManager_${process.env.VERSION_TAG}` });
+  const protocolManager = m.contract("ProtocolManager", [], { id: `ProtocolManager_${process.env.VERSION_TAG ?? 0}` });
 
   return {
     protocolManager,

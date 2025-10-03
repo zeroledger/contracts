@@ -57,17 +57,7 @@ export default {
     format: "json",
   },
   networks: {
-    hardhat: process.env.FORK
-      ? {
-          forking: {
-            url: config?.parsed?.BASE_RPC,
-          },
-          mining: {
-            auto: true,
-            interval: 1000,
-          },
-        }
-      : {},
+    hardhat: {},
     localhost: {
       url: "http://127.0.0.1:8545",
       params: {

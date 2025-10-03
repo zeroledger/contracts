@@ -20,7 +20,8 @@
     "lint": "solhint src/**/*.sol && eslint .",
     "deploy": "rm -rf ignition/deployments/chain-31337; hardhat run scripts/deploy.ts --network",
     "abi": "hardhat export-abi",
-    "prepareFeesParams": "hardhat run scripts/protocolManager/prepareFeesParams.ts --network"
+    "prepareFeesParams": "hardhat run scripts/protocolManager/prepareFeesParams.ts --network",
+    "prepare": "husky"
   },
   "bugs": {
     "url": "https://github.com:zeroledger/contracts/issues"

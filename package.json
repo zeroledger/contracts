@@ -18,10 +18,10 @@
     "gas": "forge snapshot",
     "format": "forge fmt src/; forge fmt test/",
     "lint": "solhint src/**/*.sol && eslint .",
-    "node": "hardhat node",
-    "deploy": "hardhat run scripts/deploy.ts --network",
+    "deploy": "rm -rf ignition/deployments/chain-31337; hardhat run scripts/deploy.ts --network",
     "abi": "hardhat export-abi",
-    "prepareFeesParams": "hardhat run scripts/protocolManager/prepareFeesParams.ts --network"
+    "prepareFeesParams": "hardhat run scripts/protocolManager/prepareFeesParams.ts --network",
+    "prepare": "husky"
   },
   "bugs": {
     "url": "https://github.com:zeroledger/contracts/issues"

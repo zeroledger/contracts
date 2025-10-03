@@ -10,6 +10,7 @@ import {Verifiers} from "src/Verifiers.sol";
 import {Vault} from "src/Vault.sol";
 import {Forwarder} from "src/Forwarder.sol";
 import {ProtocolManager} from "src/ProtocolManager.sol";
+import {Administrator} from "src/Administrator.sol";
 import {MockERC20} from "src/helpers/MockERC20.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {MockVerifier} from "./mocks/MockVerifier.sol";
@@ -70,22 +71,27 @@ contract VaultTest is Test {
       address(spend81Verifier),
       address(spend161Verifier)
     );
-    // Deploy ProtocolManager proxy
-    ERC1967Proxy protocolManagerProxy = new ERC1967Proxy(address(new ProtocolManager()), "");
+    mockToken = new MockERC20("Test Token", "TEST");
+    permitUtils = new PermitUtils(mockToken.DOMAIN_SEPARATOR());
 
-    // Get the protocolManager instance through the proxy
+    address runner = address(this);
+
+    Administrator administrator = new Administrator(runner, runner, runner, runner, 5 days);
+
+    ERC1967Proxy protocolManagerProxy = new ERC1967Proxy(address(new ProtocolManager()), "");
     protocolManager = ProtocolManager(address(protocolManagerProxy));
-    protocolManager.initialize(address(this), address(this), address(this));
+    protocolManager.initialize(address(administrator));
+    protocolManager.setMaxTVL(address(mockToken), type(uint240).max);
 
     ERC1967Proxy zeroLedgerForwarderProxy = new ERC1967Proxy(address(new Forwarder()), "");
     zeroLedgerForwarder = Forwarder(address(zeroLedgerForwarderProxy));
-    zeroLedgerForwarder.initialize(address(protocolManager));
+    zeroLedgerForwarder.initialize(address(administrator));
 
     ERC1967Proxy vaultProxy = new ERC1967Proxy(address(new Vault()), "");
     vault = Vault(address(vaultProxy));
-    vault.initialize(address(verifiers), address(zeroLedgerForwarder), address(protocolManager));
-    mockToken = new MockERC20("Test Token", "TEST");
-    permitUtils = new PermitUtils(mockToken.DOMAIN_SEPARATOR());
+    vault.initialize(
+      address(verifiers), address(zeroLedgerForwarder), address(protocolManager), address(administrator)
+    );
 
     // Create deterministic test accounts with private keys for signing
     (alice, alicePrivateKey) = makeAddrAndKey("alice");

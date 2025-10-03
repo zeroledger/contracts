@@ -14,6 +14,8 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Verifiers} from "src/Verifiers.sol";
+import {AccessManagedUpgradeable} from
+  "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 
 // libs
 import {PoseidonT3} from "@poseidon-solidity/PoseidonT3.sol";
@@ -42,7 +44,14 @@ interface IVaultEvents {
  * @title Vault
  * @dev A contract that manages ERC20 tokens with commitments and ZK proofs for deposits, withdrawals, and spending
  */
-contract Vault is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable, IVaultEvents {
+contract Vault is
+  Initializable,
+  UUPSUpgradeable,
+  AccessManagedUpgradeable,
+  ReentrancyGuardUpgradeable,
+  PausableUpgradeable,
+  IVaultEvents
+{
   using SafeERC20 for IERC20;
 
   struct State {
@@ -63,31 +72,25 @@ contract Vault is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, Pa
     }
   }
 
-  modifier onlySecurityCouncil() {
-    require(_getStorage().manager.hasRole(RolesLib.SECURITY_COUNCIL, _msgSender()), "Unauthorized");
-    _;
-  }
-
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
     _disableInitializers();
   }
 
-  function initialize(address verifiers, address trustedForwarder, address manager) public initializer {
+  function initialize(address verifiers, address trustedForwarder, address protocolManager, address initialAuthority)
+    public
+    initializer
+  {
     __UUPSUpgradeable_init();
     __ReentrancyGuard_init();
     __Pausable_init();
-    __vault_init_unchained(verifiers, trustedForwarder, manager);
+    __AccessManaged_init(initialAuthority);
+    __vault_init_unchained(verifiers, trustedForwarder, protocolManager);
   }
 
   function upgradeCallBack() external reinitializer(0) {}
 
-  function _authorizeUpgrade(address newImplementation) internal view override {
-    require(
-      _getStorage().manager.isImplementationApproved(address(this), newImplementation),
-      "Implementation is not approved"
-    );
-  }
+  function _authorizeUpgrade(address newImplementation) internal override restricted {}
 
   function __vault_init_unchained(address verifiers, address trustedForwarder, address manager) internal {
     State storage $ = _getStorage();
@@ -148,14 +151,14 @@ contract Vault is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, Pa
   /**
    * @dev Pause all whenNotPaused modified methods
    */
-  function pause() external onlySecurityCouncil {
+  function pause() external restricted {
     _pause();
   }
 
   /**
    * @dev Unpause all whenNotPaused modified methods
    */
-  function unpause() external onlySecurityCouncil {
+  function unpause() external restricted {
     _unpause();
   }
 
@@ -169,11 +172,11 @@ contract Vault is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, Pa
     nonReentrant
     whenNotPaused
   {
-    State storage $ = _getStorage();
     _deposit(depositParams, proof);
 
     IERC20 t = IERC20(depositParams.token);
     t.safeTransferFrom(_msgSender(), address(this), depositParams.amount);
+    State storage $ = _getStorage();
     t.safeTransferFrom(_msgSender(), address($.manager), $.manager.getFees(depositParams.token).deposit);
     t.safeTransferFrom(_msgSender(), depositParams.forwarderFeeRecipient, depositParams.forwarderFee);
     emit TokenDeposited(_msgSender(), depositParams.token, depositParams.amount);
@@ -197,8 +200,8 @@ contract Vault is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, Pa
     bytes32 s
   ) external nonReentrant whenNotPaused {
     require(deadline >= block.timestamp, "Vault: Permit expired");
-    State storage $ = _getStorage();
     _deposit(depositParams, proof);
+    State storage $ = _getStorage();
     uint256 depositFee = $.manager.getFees(depositParams.token).deposit;
 
     // Execute the permit to set allowance
@@ -223,6 +226,8 @@ contract Vault is Initializable, UUPSUpgradeable, ReentrancyGuardUpgradeable, Pa
     DepositCommitmentParams[3] calldata depositCommitmentParams = depositParams.depositCommitmentParams;
     require(token != address(0), "Vault: Invalid token address");
     require(amount > 0, "Vault: Amount must be greater than 0");
+    uint240 maxTVL = $.manager.getMaxTVL(token);
+    require(IERC20(token).balanceOf(address(this)) + amount <= maxTVL, "Vault: Amount exceeds max TVL");
     require(
       $.verifiers.depositVerifier().verify(proof, InputsLib.depositInputs(depositCommitmentParams, amount)),
       "Vault: Invalid ZK proof"

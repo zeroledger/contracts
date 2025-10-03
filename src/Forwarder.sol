@@ -7,50 +7,32 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/ut
 import {ERC2771ForwarderUpgradeable} from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ForwarderUpgradeable.sol";
 import {SignatureCheckerLib} from "@solady/src/utils/SignatureCheckerLib.sol";
 import {ProtocolManager} from "src/ProtocolManager.sol";
+import {AccessManagedUpgradeable} from
+  "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 
 /**
  * Upgradable forwarder with injected ProtocolManager contract
  */
-contract Forwarder is Initializable, UUPSUpgradeable, ERC2771ForwarderUpgradeable {
-  struct State {
-    ProtocolManager manager;
-  }
-
+contract Forwarder is Initializable, UUPSUpgradeable, ERC2771ForwarderUpgradeable, AccessManagedUpgradeable {
   error DeprecatedMethod(string reason);
-
-  // keccak256(abi.encode(uint256(keccak256("storage.zeroledger.forwarder")) - 1)) & ~bytes32(uint256(0xff))
-  bytes32 internal constant STORAGE_LOCATION = 0x51362966e92df5c04c0f76086a8cd5e148faf622e58eb20b42b402e453aac800;
-
-  function _getStorage() internal pure returns (State storage $) {
-    // solhint-disable-next-line no-inline-assembly
-    assembly {
-      $.slot := STORAGE_LOCATION
-    }
-  }
 
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
     _disableInitializers();
   }
 
-  function initialize(address manager) public initializer {
+  function initialize(address initialAuthority) public initializer {
     __UUPSUpgradeable_init();
     __ERC2771Forwarder_init("ZeroLedgerForwarder");
-    __forwarder_init_unchained(manager);
+    __AccessManaged_init(initialAuthority);
+    __forwarder_init_unchained();
   }
 
-  function upgradeCallBack() external reinitializer(1) {}
+  function upgradeCallBack() external reinitializer(0) {}
 
-  function _authorizeUpgrade(address newImplementation) internal view override {
-    require(
-      _getStorage().manager.isImplementationApproved(address(this), newImplementation),
-      "Implementation is not approved"
-    );
-  }
+  function _authorizeUpgrade(address newImplementation) internal override restricted {}
 
-  function __forwarder_init_unchained(address manager) internal {
-    _getStorage().manager = ProtocolManager(manager);
-  }
+  function __forwarder_init_unchained() internal {}
 
   function verify(ForwardRequestData calldata) public pure override returns (bool) {
     revert DeprecatedMethod("Method does not support ERC6492 signature verification, use execution simulation instead");
@@ -137,9 +119,5 @@ contract Forwarder is Initializable, UUPSUpgradeable, ERC2771ForwarderUpgradeabl
     isValid = SignatureCheckerLib.isValidERC6492SignatureNow(request.from, digest, request.signature);
     isTrustedForwarder = _isTrustedByTarget(request.to);
     active = request.deadline >= block.timestamp;
-  }
-
-  function getManager() external view returns (address) {
-    return address(_getStorage().manager);
   }
 }

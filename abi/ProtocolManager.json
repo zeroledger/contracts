@@ -5,24 +5,41 @@
     "type": "constructor"
   },
   {
-    "inputs": [],
-    "name": "AccessControlBadConfirmation",
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "authority",
+        "type": "address"
+      }
+    ],
+    "name": "AccessManagedInvalidAuthority",
     "type": "error"
   },
   {
     "inputs": [
       {
         "internalType": "address",
-        "name": "account",
+        "name": "caller",
         "type": "address"
       },
       {
-        "internalType": "bytes32",
-        "name": "neededRole",
-        "type": "bytes32"
+        "internalType": "uint32",
+        "name": "delay",
+        "type": "uint32"
       }
     ],
-    "name": "AccessControlUnauthorizedAccount",
+    "name": "AccessManagedRequiredDelay",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "caller",
+        "type": "address"
+      }
+    ],
+    "name": "AccessManagedUnauthorized",
     "type": "error"
   },
   {
@@ -98,6 +115,19 @@
     "anonymous": false,
     "inputs": [
       {
+        "indexed": false,
+        "internalType": "address",
+        "name": "authority",
+        "type": "address"
+      }
+    ],
+    "name": "AuthorityUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": true,
         "internalType": "address",
         "name": "token",
@@ -148,93 +178,18 @@
     "inputs": [
       {
         "indexed": true,
-        "internalType": "bytes32",
-        "name": "role",
-        "type": "bytes32"
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
       },
       {
         "indexed": true,
-        "internalType": "bytes32",
-        "name": "previousAdminRole",
-        "type": "bytes32"
-      },
-      {
-        "indexed": true,
-        "internalType": "bytes32",
-        "name": "newAdminRole",
-        "type": "bytes32"
+        "internalType": "uint240",
+        "name": "maxTVL",
+        "type": "uint240"
       }
     ],
-    "name": "RoleAdminChanged",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "bytes32",
-        "name": "role",
-        "type": "bytes32"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "sender",
-        "type": "address"
-      }
-    ],
-    "name": "RoleGranted",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "bytes32",
-        "name": "role",
-        "type": "bytes32"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "sender",
-        "type": "address"
-      }
-    ],
-    "name": "RoleRevoked",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "proxy",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "implementation",
-        "type": "address"
-      }
-    ],
-    "name": "UpgradeApproved",
+    "name": "SetMaxTVL",
     "type": "event"
   },
   {
@@ -252,19 +207,6 @@
   },
   {
     "inputs": [],
-    "name": "DEFAULT_ADMIN_ROLE",
-    "outputs": [
-      {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "UPGRADE_INTERFACE_VERSION",
     "outputs": [
       {
@@ -277,21 +219,16 @@
     "type": "function"
   },
   {
-    "inputs": [
+    "inputs": [],
+    "name": "authority",
+    "outputs": [
       {
         "internalType": "address",
-        "name": "uupsProxy",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "newImplementation",
+        "name": "",
         "type": "address"
       }
     ],
-    "name": "approveUpgrade",
-    "outputs": [],
-    "stateMutability": "nonpayable",
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -333,59 +270,17 @@
   {
     "inputs": [
       {
-        "internalType": "bytes32",
-        "name": "role",
-        "type": "bytes32"
-      }
-    ],
-    "name": "getRoleAdmin",
-    "outputs": [
-      {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bytes32",
-        "name": "role",
-        "type": "bytes32"
-      },
-      {
         "internalType": "address",
-        "name": "account",
+        "name": "token",
         "type": "address"
       }
     ],
-    "name": "grantRole",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bytes32",
-        "name": "role",
-        "type": "bytes32"
-      },
-      {
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      }
-    ],
-    "name": "hasRole",
+    "name": "getMaxTVL",
     "outputs": [
       {
-        "internalType": "bool",
+        "internalType": "uint240",
         "name": "",
-        "type": "bool"
+        "type": "uint240"
       }
     ],
     "stateMutability": "view",
@@ -395,17 +290,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "admin",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "securityCouncil",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "treasureManager",
+        "name": "initialAuthority",
         "type": "address"
       }
     ],
@@ -415,24 +300,13 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "uupsProxy",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "newImplementation",
-        "type": "address"
-      }
-    ],
-    "name": "isImplementationApproved",
+    "inputs": [],
+    "name": "isConsumingScheduledOp",
     "outputs": [
       {
-        "internalType": "bool",
+        "internalType": "bytes4",
         "name": "",
-        "type": "bool"
+        "type": "bytes4"
       }
     ],
     "stateMutability": "view",
@@ -454,35 +328,12 @@
   {
     "inputs": [
       {
-        "internalType": "bytes32",
-        "name": "role",
-        "type": "bytes32"
-      },
-      {
         "internalType": "address",
-        "name": "callerConfirmation",
+        "name": "newAuthority",
         "type": "address"
       }
     ],
-    "name": "renounceRole",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bytes32",
-        "name": "role",
-        "type": "bytes32"
-      },
-      {
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      }
-    ],
-    "name": "revokeRole",
+    "name": "setAuthority",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -525,20 +376,19 @@
   {
     "inputs": [
       {
-        "internalType": "bytes4",
-        "name": "interfaceId",
-        "type": "bytes4"
-      }
-    ],
-    "name": "supportsInterface",
-    "outputs": [
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
       {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
+        "internalType": "uint240",
+        "name": "maxTVL",
+        "type": "uint240"
       }
     ],
-    "stateMutability": "view",
+    "name": "setMaxTVL",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {

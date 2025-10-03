@@ -1,0 +1,57 @@
+[
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "components": [
+          {
+            "internalType": "uint240",
+            "name": "deposit",
+            "type": "uint240"
+          },
+          {
+            "internalType": "uint240",
+            "name": "spend",
+            "type": "uint240"
+          },
+          {
+            "internalType": "uint240",
+            "name": "withdraw",
+            "type": "uint240"
+          }
+        ],
+        "indexed": true,
+        "internalType": "struct Fees",
+        "name": "fees",
+        "type": "tuple"
+      }
+    ],
+    "name": "FeesChanged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint240",
+        "name": "maxTVL",
+        "type": "uint240"
+      }
+    ],
+    "name": "SetMaxTVL",
+    "type": "event"
+  }
+]

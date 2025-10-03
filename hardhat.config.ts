@@ -5,13 +5,15 @@ import "@nomicfoundation/hardhat-toolbox";
 import "@openzeppelin/hardhat-upgrades";
 import "@nomicfoundation/hardhat-foundry";
 import "hardhat-abi-exporter";
-import { ZeroHash, getBytes, id, hexlify, concat, Wallet } from "ethers";
+import { getBytes, id, hexlify, concat, Wallet } from "ethers";
 
 if (config.error) {
   console.error(config.error);
 }
 
-const deployerAccounts = [config?.parsed?.PRIVATE_KEY || ZeroHash];
+const mockPk = "0xa319d638222ac86847f8f9c228ff411b3e1b68d2dc301e2ba237778475cc25e1";
+
+const deployerAccounts = [config?.parsed?.PRIVATE_KEY || mockPk];
 
 const DEFAULT_RPC = "https:random.com";
 

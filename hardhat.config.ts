@@ -81,8 +81,8 @@ export default {
   },
   etherscan: {
     apiKey: {
-      baseSepolia: config?.parsed?.BASE_API_KEY,
-      base: config?.parsed?.BASE_API_KEY,
+      baseSepolia: config?.parsed?.ETHERSCAN_API_KEY,
+      base: config?.parsed?.ETHERSCAN_API_KEY,
     },
   },
 };

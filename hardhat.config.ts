@@ -11,6 +11,7 @@ if (config.error) {
   console.error(config.error);
 }
 
+const mockRpc = "http://127.0.0.1:8545";
 const mockPk = "0xa319d638222ac86847f8f9c228ff411b3e1b68d2dc301e2ba237778475cc25e1";
 
 const deployerAccounts = [config?.parsed?.PRIVATE_KEY || mockPk];
@@ -77,7 +78,7 @@ export default {
       },
     },
     baseSepolia: {
-      url: config?.parsed?.BASE_SEPOLIA_RPC,
+      url: config?.parsed?.BASE_SEPOLIA_RPC ?? mockRpc,
       accounts: deployerAccounts,
       params: {
         admin: config?.parsed?.TESTNET_ADMIN_ADDRESS,
@@ -87,7 +88,7 @@ export default {
       },
     },
     base: {
-      url: config?.parsed?.BASE_RPC,
+      url: config?.parsed?.BASE_RPC ?? mockRpc,
       accounts: deployerAccounts,
       params: {
         admin: config?.parsed?.ADMIN_ADDRESS,

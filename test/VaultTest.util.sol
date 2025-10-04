@@ -9,7 +9,7 @@ import "@std/Test.sol";
 import {Verifiers} from "src/Verifiers.sol";
 import {Vault} from "src/Vault.sol";
 import {Forwarder} from "src/Forwarder.sol";
-import {ProtocolManager} from "src/ProtocolManager.sol";
+import {ProtocolManager, TokenTVLConfig} from "src/ProtocolManager.sol";
 import {Administrator} from "src/Administrator.sol";
 import {MockERC20} from "src/helpers/MockERC20.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
@@ -80,8 +80,7 @@ contract VaultTest is Test {
 
     ERC1967Proxy protocolManagerProxy = new ERC1967Proxy(address(new ProtocolManager()), "");
     protocolManager = ProtocolManager(address(protocolManagerProxy));
-    protocolManager.initialize(address(administrator));
-    protocolManager.setMaxTVL(address(mockToken), type(uint240).max);
+    protocolManager.initialize(address(administrator), prepareTvlConfig(type(uint240).max));
 
     ERC1967Proxy zeroLedgerForwarderProxy = new ERC1967Proxy(address(new Forwarder()), "");
     zeroLedgerForwarder = Forwarder(address(zeroLedgerForwarderProxy));
@@ -105,6 +104,12 @@ contract VaultTest is Test {
     mockToken.mint(alice, 1000e18);
     mockToken.mint(bob, 1000e18);
     mockToken.mint(charlie, 1000e18);
+  }
+
+  function prepareTvlConfig(uint240 amount) internal returns (TokenTVLConfig[] memory) {
+    TokenTVLConfig[] memory c = new TokenTVLConfig[](1);
+    c[0] = TokenTVLConfig(address(mockToken), amount);
+    return c;
   }
 
   function getDummyProof() internal pure returns (uint256[24] memory) {

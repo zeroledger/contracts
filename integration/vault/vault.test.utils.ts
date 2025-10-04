@@ -105,39 +105,38 @@ const mockMetadata = randomBytes(32);
 export async function deployVaultFixture(): Promise<TestFixture> {
   const [owner, user, otherUser, forwarderFeeRecipient] = await ethers.getSigners();
 
-  const { verifiers, vault, forwarder, protocolManager, administrator } = await ignition.deploy(ProxyModule, {
-    parameters: {
-      Administrator: {
-        admin: owner.address,
-        maintainer: owner.address,
-        treasureManager: owner.address,
-        securityCouncil: owner.address,
-        defaultUpgradeDelay: 12 * 60 * 60,
+  const { verifiers, vault, forwarder, protocolManager, administrator, mockERC20 } = await ignition.deploy(
+    ProxyModule,
+    {
+      parameters: {
+        Administrator: {
+          admin: owner.address,
+          maintainer: owner.address,
+          treasureManager: owner.address,
+          securityCouncil: owner.address,
+          defaultUpgradeDelay: 12 * 60 * 60,
+        },
+        Proxy: {
+          maxTVL: ethers.parseEther("10000"),
+        },
       },
     },
-  });
-
-  // Deploy MockERC20 token
-  const MockERC20Factory = await ethers.getContractFactory("MockERC20");
-  const mockToken = await MockERC20Factory.deploy("Mock Token", "MTK");
-  await mockToken.waitForDeployment();
+  );
 
   // Mint tokens to users for testing
   const mintAmount = ethers.parseEther("1000");
-  await mockToken.mint(user.address, mintAmount);
-  await mockToken.mint(otherUser.address, mintAmount);
+  await mockERC20.mint(user.address, mintAmount);
+  await mockERC20.mint(otherUser.address, mintAmount);
 
-  await protocolManager.setFees(await mockToken.getAddress(), {
+  await protocolManager.setFees(await mockERC20.getAddress(), {
     deposit: ethers.parseEther("5"),
     spend: ethers.parseEther("5"),
     withdraw: ethers.parseEther("5"),
   });
 
-  await protocolManager.setMaxTVL(await mockToken.getAddress(), ethers.parseEther("10000"));
-
   return {
     vault: vault as unknown as Vault,
-    mockToken,
+    mockToken: mockERC20 as unknown as MockERC20,
     verifiers: verifiers as unknown as Verifiers,
     owner,
     user,

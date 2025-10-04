@@ -8,16 +8,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {AccessManagedUpgradeable} from
   "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 
-struct Fees {
-  uint240 deposit;
-  uint240 spend;
-  uint240 withdraw;
-}
-
-interface IProtocolEvents {
-  event FeesChanged(address indexed token, Fees indexed fees);
-  event SetMaxTVL(address indexed token, uint240 indexed maxTVL);
-}
+import {Fees, IProtocolEvents, TokenTVLConfig} from "src/ProtocolManager.types.sol";
 
 /**
  * @dev Contract to manage protocol parameters
@@ -50,15 +41,17 @@ contract ProtocolManager is Initializable, UUPSUpgradeable, IProtocolEvents, Acc
     _disableInitializers();
   }
 
-  function initialize(address initialAuthority) public initializer {
+  function initialize(address initialAuthority, TokenTVLConfig[] calldata config) public initializer {
     __UUPSUpgradeable_init();
     __AccessManaged_init(initialAuthority);
-    __protocol_init_unchained();
+    __protocol_init_unchained(config);
   }
 
   function upgradeCallBack() external reinitializer(0) {}
 
-  function __protocol_init_unchained() internal {}
+  function __protocol_init_unchained(TokenTVLConfig[] calldata config) internal {
+    setMaxTVL(config);
+  }
 
   function _authorizeUpgrade(address newImplementation) internal override restricted {}
 
@@ -79,9 +72,12 @@ contract ProtocolManager is Initializable, UUPSUpgradeable, IProtocolEvents, Acc
 
   /* Max TVL */
 
-  function setMaxTVL(address token, uint240 maxTVL) external restricted {
-    _getStorage().maxTVL[token] = maxTVL;
-    emit SetMaxTVL(token, maxTVL);
+  function setMaxTVL(TokenTVLConfig[] calldata config) public restricted {
+    for (uint256 i = 0; i < config.length; i++) {
+      TokenTVLConfig memory c = config[i];
+      _getStorage().maxTVL[c.token] = c.maxTVL;
+      emit SetMaxTVL(c.token, c.maxTVL);
+    }
   }
 
   function getMaxTVL(address token) external view returns (uint240) {

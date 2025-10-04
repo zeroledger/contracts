@@ -55,6 +55,9 @@ async function main() {
           securityCouncil: securityCouncil,
           defaultUpgradeDelay: 6 * 60 * 60,
         },
+        Proxy: {
+          maxTVL: hre.ethers.parseEther("1000000"),
+        },
       },
       strategy: hre.network.name === "hardhat" ? "basic" : "create2",
       strategyConfig: {

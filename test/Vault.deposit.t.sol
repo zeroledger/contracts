@@ -233,7 +233,7 @@ contract VaultDepositTest is VaultTest, IVaultEvents {
     depositVerifier.setVerificationResult(true);
 
     // Set max TVL lower than the intended deposit amount
-    protocolManager.setMaxTVL(address(mockToken), defaultDepositAmount - 1);
+    protocolManager.setMaxTVL(prepareTvlConfig(defaultDepositAmount - 1));
 
     DepositCommitmentParams[3] memory commitmentParams;
     commitmentParams[0] = DepositCommitmentParams({poseidonHash: 123456789, owner: alice, metadata: "metadata1"});
@@ -264,7 +264,7 @@ contract VaultDepositTest is VaultTest, IVaultEvents {
     depositVerifier.setVerificationResult(true);
 
     // Set max TVL exactly equal to the intended deposit amount
-    protocolManager.setMaxTVL(address(mockToken), defaultDepositAmount);
+    protocolManager.setMaxTVL(prepareTvlConfig(defaultDepositAmount));
 
     DepositCommitmentParams[3] memory commitmentParams;
     commitmentParams[0] = DepositCommitmentParams({poseidonHash: 123456789, owner: alice, metadata: "metadata1"});

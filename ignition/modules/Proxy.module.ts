@@ -25,7 +25,7 @@ export default buildModule("Proxy", (m) => {
   const protocolManager = m.contractAt("ProtocolManager", protocolManagerProxy);
   const vault = m.contractAt("Vault", vaultProxy);
 
-  m.call(protocolManager, "initialize", [administrator]);
+  m.call(protocolManager, "initialize", [administrator, [{ token: mockERC20, maxTVL: m.getParameter("maxTVL") }]]);
   m.call(forwarder, "initialize(address)", [administrator]);
   m.call(vault, "initialize", [verifiers, forwarder, protocolManager, administrator]);
 

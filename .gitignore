@@ -1,5 +1,6 @@
 .vscode/
 .env
+.env.local
 node_modules
 .yarn
 # Hardhat files

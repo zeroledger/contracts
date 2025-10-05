@@ -50,7 +50,7 @@ contract ProtocolManager is Initializable, UUPSUpgradeable, IProtocolEvents, Acc
   function upgradeCallBack() external reinitializer(0) {}
 
   function __protocol_init_unchained(TokenTVLConfig[] calldata config) internal {
-    setMaxTVL(config);
+    _setMaxTVL(config);
   }
 
   function _authorizeUpgrade(address newImplementation) internal override restricted {}
@@ -72,12 +72,16 @@ contract ProtocolManager is Initializable, UUPSUpgradeable, IProtocolEvents, Acc
 
   /* Max TVL */
 
-  function setMaxTVL(TokenTVLConfig[] calldata config) public restricted {
+  function _setMaxTVL(TokenTVLConfig[] calldata config) internal {
     for (uint256 i = 0; i < config.length; i++) {
       TokenTVLConfig memory c = config[i];
       _getStorage().maxTVL[c.token] = c.maxTVL;
       emit SetMaxTVL(c.token, c.maxTVL);
     }
+  }
+
+  function setMaxTVL(TokenTVLConfig[] calldata config) public restricted {
+    _setMaxTVL(config);
   }
 
   function getMaxTVL(address token) external view returns (uint240) {

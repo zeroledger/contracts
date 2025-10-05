@@ -8,7 +8,7 @@ import AdministratorModule from "./Administrator.module";
 
 export default buildModule("Proxy", (m) => {
   const { mockERC20 } = m.useModule(MockERC20Module);
-  const { verifiers } = m.useModule(VerifiersModule);
+  const { verifiers, ...circuitVerifiers } = m.useModule(VerifiersModule);
   const { administrator } = m.useModule(AdministratorModule);
 
   const { vault: vaultImplementation, poseidonT3, inputsLib } = m.useModule(VaultModule);
@@ -41,5 +41,6 @@ export default buildModule("Proxy", (m) => {
     administrator,
     poseidonT3,
     inputsLib,
+    ...circuitVerifiers,
   };
 });

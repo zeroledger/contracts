@@ -33,5 +33,17 @@ export default buildModule("Verifiers", (m) => {
 
   return {
     verifiers,
+    depositVerifier,
+    spend11Verifier,
+    spend12Verifier,
+    spend13Verifier,
+    spend21Verifier,
+    spend22Verifier,
+    spend23Verifier,
+    spend31Verifier,
+    spend32Verifier,
+    spend33Verifier,
+    spend81Verifier,
+    spend161Verifier,
   };
 });

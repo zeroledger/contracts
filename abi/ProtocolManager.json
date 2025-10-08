@@ -292,6 +292,23 @@
         "internalType": "address",
         "name": "initialAuthority",
         "type": "address"
+      },
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "token",
+            "type": "address"
+          },
+          {
+            "internalType": "uint240",
+            "name": "maxTVL",
+            "type": "uint240"
+          }
+        ],
+        "internalType": "struct TokenTVLConfig[]",
+        "name": "config",
+        "type": "tuple[]"
       }
     ],
     "name": "initialize",
@@ -376,14 +393,21 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      },
-      {
-        "internalType": "uint240",
-        "name": "maxTVL",
-        "type": "uint240"
+        "components": [
+          {
+            "internalType": "address",
+            "name": "token",
+            "type": "address"
+          },
+          {
+            "internalType": "uint240",
+            "name": "maxTVL",
+            "type": "uint240"
+          }
+        ],
+        "internalType": "struct TokenTVLConfig[]",
+        "name": "config",
+        "type": "tuple[]"
       }
     ],
     "name": "setMaxTVL",

@@ -3,7 +3,7 @@ pragma solidity >=0.8.21;
 
 import {VaultTest} from "./VaultTest.util.sol";
 import {WithdrawItem, WithdrawRecipient} from "src/Vault.types.sol";
-import {IVaultEvents} from "src/Vault.sol";
+import {IVaultEvents} from "src/Vault.types.sol";
 import {Fees} from "src/ProtocolManager.sol";
 
 contract VaultWithdrawTest is VaultTest, IVaultEvents {
@@ -50,7 +50,7 @@ contract VaultWithdrawTest is VaultTest, IVaultEvents {
     createDeposit(alice, DEPOSIT_AMOUNT, DEPOSIT_FEE, DEPOSIT_FORWARDER_FEE, depositHashes, depositOwners);
 
     // Verify the commitment exists and is owned by Alice
-    (address owner,) = vault.getCommitment(address(mockToken), poseidonHash1);
+    address owner = vault.getCommitment(address(mockToken), poseidonHash1);
     assertEq(owner, alice, "Commitment should exist and be owned by Alice");
 
     WithdrawItem[] memory items = new WithdrawItem[](1);
@@ -63,7 +63,7 @@ contract VaultWithdrawTest is VaultTest, IVaultEvents {
     emit CommitmentRemoved(alice, address(mockToken), poseidonHash1);
 
     vm.expectEmit(true, true, false, true);
-    emit Withdrawal(alice, address(mockToken), WITHDRAW_AMOUNT_1);
+    emit Withdraw(alice, address(mockToken), WITHDRAW_AMOUNT_1);
 
     // Execute withdraw
     vm.startPrank(alice);
@@ -71,7 +71,7 @@ contract VaultWithdrawTest is VaultTest, IVaultEvents {
     vm.stopPrank();
 
     // Verify commitment was removed
-    (address ownerAfter,) = vault.getCommitment(address(mockToken), poseidonHash1);
+    address ownerAfter = vault.getCommitment(address(mockToken), poseidonHash1);
     assertEq(ownerAfter, address(0), "Commitment should be removed");
   }
 
@@ -98,7 +98,7 @@ contract VaultWithdrawTest is VaultTest, IVaultEvents {
     emit CommitmentRemoved(alice, address(mockToken), poseidonHash3);
 
     vm.expectEmit(true, true, false, true);
-    emit Withdrawal(alice, address(mockToken), WITHDRAW_AMOUNT_2 + WITHDRAW_AMOUNT_3);
+    emit Withdraw(alice, address(mockToken), WITHDRAW_AMOUNT_2 + WITHDRAW_AMOUNT_3);
 
     // Execute withdraw
     vm.startPrank(alice);
@@ -106,8 +106,8 @@ contract VaultWithdrawTest is VaultTest, IVaultEvents {
     vm.stopPrank();
 
     // Verify commitments were removed
-    (address owner1,) = vault.getCommitment(address(mockToken), poseidonHash2);
-    (address owner2,) = vault.getCommitment(address(mockToken), poseidonHash3);
+    address owner1 = vault.getCommitment(address(mockToken), poseidonHash2);
+    address owner2 = vault.getCommitment(address(mockToken), poseidonHash3);
     assertEq(owner1, address(0), "First commitment should be removed");
     assertEq(owner2, address(0), "Second commitment should be removed");
   }
@@ -132,7 +132,7 @@ contract VaultWithdrawTest is VaultTest, IVaultEvents {
     vm.stopPrank();
 
     // Verify commitment was removed
-    (address ownerAfter,) = vault.getCommitment(address(mockToken), poseidonHash1);
+    address ownerAfter = vault.getCommitment(address(mockToken), poseidonHash1);
     assertEq(ownerAfter, address(0), "Commitment should be removed");
   }
 
@@ -146,7 +146,7 @@ contract VaultWithdrawTest is VaultTest, IVaultEvents {
 
     // Execute withdraw - should fail
     vm.startPrank(alice);
-    vm.expectRevert("Vault: Commitment not found");
+    vm.expectRevert("Vault: Only assigned address can withdraw");
     vault.withdraw(address(mockToken), items, recipients);
     vm.stopPrank();
   }

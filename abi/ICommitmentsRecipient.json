@@ -1,0 +1,81 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "from",
+        "type": "address"
+      },
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "token",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256[]",
+            "name": "inputsPoseidonHashes",
+            "type": "uint256[]"
+          },
+          {
+            "internalType": "uint256[]",
+            "name": "outputsPoseidonHashes",
+            "type": "uint256[]"
+          },
+          {
+            "internalType": "bytes[]",
+            "name": "metadata",
+            "type": "bytes[]"
+          },
+          {
+            "components": [
+              {
+                "internalType": "address",
+                "name": "owner",
+                "type": "address"
+              },
+              {
+                "internalType": "uint8[]",
+                "name": "indexes",
+                "type": "uint8[]"
+              }
+            ],
+            "internalType": "struct OutputsOwners[]",
+            "name": "outputsOwners",
+            "type": "tuple[]"
+          },
+          {
+            "components": [
+              {
+                "internalType": "address",
+                "name": "owner",
+                "type": "address"
+              },
+              {
+                "internalType": "uint240",
+                "name": "amount",
+                "type": "uint240"
+              }
+            ],
+            "internalType": "struct PublicOutput[]",
+            "name": "publicOutputs",
+            "type": "tuple[]"
+          }
+        ],
+        "internalType": "struct Transaction",
+        "name": "transaction",
+        "type": "tuple"
+      },
+      {
+        "internalType": "bytes",
+        "name": "data",
+        "type": "bytes"
+      }
+    ],
+    "name": "onCommitmentsReceived",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+]

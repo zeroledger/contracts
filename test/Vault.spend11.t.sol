@@ -3,7 +3,7 @@ pragma solidity >=0.8.21;
 
 import {VaultTest} from "./VaultTest.util.sol";
 import {Transaction, OutputsOwners, PublicOutput} from "src/Vault.types.sol";
-import {IVaultEvents} from "src/Vault.sol";
+import {IVaultEvents} from "src/Vault.types.sol";
 import {Fees} from "src/ProtocolManager.sol";
 
 contract VaultSpend11Test is VaultTest, IVaultEvents {
@@ -61,8 +61,8 @@ contract VaultSpend11Test is VaultTest, IVaultEvents {
     uint256[24] memory proof = getDummyProof();
 
     // Record initial state
-    (address inputOwnerBefore,) = vault.getCommitment(address(mockToken), inputHash);
-    (address outputOwnerBefore,) = vault.getCommitment(address(mockToken), outputHash);
+    address inputOwnerBefore = vault.getCommitment(address(mockToken), inputHash);
+    address outputOwnerBefore = vault.getCommitment(address(mockToken), outputHash);
 
     // Expect events to be emitted
     vm.expectEmit(true, true, false, true);
@@ -72,9 +72,7 @@ contract VaultSpend11Test is VaultTest, IVaultEvents {
     emit CommitmentCreated(alice, address(mockToken), outputHash, "spend11_metadata");
 
     vm.expectEmit(true, true, false, true);
-    emit TransactionSpent(
-      alice, address(mockToken), transaction.inputsPoseidonHashes, transaction.outputsPoseidonHashes
-    );
+    emit Spend(alice, address(mockToken), transaction.inputsPoseidonHashes, transaction.outputsPoseidonHashes);
 
     // Execute the spend transaction
     vm.startPrank(alice);
@@ -82,11 +80,11 @@ contract VaultSpend11Test is VaultTest, IVaultEvents {
     vm.stopPrank();
 
     // Verify the input commitment was removed
-    (address inputOwnerAfter,) = vault.getCommitment(address(mockToken), inputHash);
+    address inputOwnerAfter = vault.getCommitment(address(mockToken), inputHash);
     assertEq(inputOwnerAfter, address(0), "Input commitment should be removed");
 
     // Verify the output commitment was created
-    (address outputOwnerAfter,) = vault.getCommitment(address(mockToken), outputHash);
+    address outputOwnerAfter = vault.getCommitment(address(mockToken), outputHash);
     assertEq(outputOwnerAfter, alice, "Output commitment should be assigned to Alice");
 
     // Verify the input commitment was originally assigned to Alice

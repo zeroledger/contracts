@@ -21,8 +21,8 @@ contract ProtocolManager is Initializable, UUPSUpgradeable, IProtocolEvents, Acc
     mapping(address => uint240) maxTVL;
   }
 
-  // keccak256(abi.encode(uint256(keccak256("storage.zeroledger.manager")) - 1)) & ~bytes32(uint256(0xff))
-  bytes32 internal constant STORAGE_LOCATION = 0x1e6edab0c58916f2cdb4173a0950c64e221f1070d5cd2e7a1af36c4a77561400;
+  // keccak256(abi.encode(uint256(keccak256("storage.zeroledger.ProtocolManager")) - 1)) & ~bytes32(uint256(0xff))
+  bytes32 internal constant STORAGE_LOCATION = 0xe0580d69c76a1485a3ec232504ae744d7dbd58648ec64d89403a4e1fbff1fb00;
 
   function _getStorage() internal pure returns (State storage $) {
     // solhint-disable-next-line no-inline-assembly

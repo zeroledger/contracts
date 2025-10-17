@@ -4,7 +4,7 @@ pragma solidity >=0.8.21;
 import {VaultTest} from "./VaultTest.util.sol";
 import {DepositParams, DepositCommitmentParams} from "src/Vault.types.sol";
 import {Fees} from "src/ProtocolManager.sol";
-import {IVaultEvents} from "src/Vault.sol";
+import {IVaultEvents} from "src/Vault.types.sol";
 import {PermitUtils} from "./Permit.util.sol";
 
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
@@ -61,9 +61,9 @@ contract VaultDepositTest is VaultTest, IVaultEvents {
       "Forwarder fee recipient should receive correct fee"
     );
     // Verify commitments were created
-    (address owner1,) = vault.getCommitment(address(mockToken), 123456789);
-    (address owner2,) = vault.getCommitment(address(mockToken), 987654321);
-    (address owner3,) = vault.getCommitment(address(mockToken), 555666777);
+    address owner1 = vault.getCommitment(address(mockToken), 123456789);
+    address owner2 = vault.getCommitment(address(mockToken), 987654321);
+    address owner3 = vault.getCommitment(address(mockToken), 555666777);
 
     assertEq(owner1, alice, "Commitment 1 should be assigned to Alice");
     assertEq(owner2, bob, "Commitment 2 should be assigned to Bob");
@@ -78,7 +78,7 @@ contract VaultDepositTest is VaultTest, IVaultEvents {
     DepositCommitmentParams[3] memory commitmentParams;
     commitmentParams[0] = DepositCommitmentParams({poseidonHash: 123456789, owner: alice, metadata: "metadata1"});
     commitmentParams[1] = DepositCommitmentParams({
-      poseidonHash: 16345784317541686154474118656352090725662212393131703302641232392927716723243,
+      poseidonHash: 15137436504035450233189320721078414488136960400594787218856438198681086299747,
       owner: bob,
       metadata: "metadata2"
     }); // Shared input
@@ -100,11 +100,11 @@ contract VaultDepositTest is VaultTest, IVaultEvents {
     vault.deposit(depositParams, proof);
 
     // Verify only non-shared commitments were created
-    (address owner1,) = vault.getCommitment(address(mockToken), 123456789);
-    (address owner2,) = vault.getCommitment(
-      address(mockToken), 16345784317541686154474118656352090725662212393131703302641232392927716723243
+    address owner1 = vault.getCommitment(address(mockToken), 123456789);
+    address owner2 = vault.getCommitment(
+      address(mockToken), 15137436504035450233189320721078414488136960400594787218856438198681086299747
     );
-    (address owner3,) = vault.getCommitment(address(mockToken), 555666777);
+    address owner3 = vault.getCommitment(address(mockToken), 555666777);
 
     assertEq(owner1, alice, "Commitment 1 should be assigned to Alice");
     assertEq(owner2, address(0), "Shared input should not create commitment");
@@ -125,9 +125,9 @@ contract VaultDepositTest is VaultTest, IVaultEvents {
     );
 
     // Verify all commitments were created for Alice
-    (address owner1,) = vault.getCommitment(address(mockToken), 123456789);
-    (address owner2,) = vault.getCommitment(address(mockToken), 987654321);
-    (address owner3,) = vault.getCommitment(address(mockToken), 555666777);
+    address owner1 = vault.getCommitment(address(mockToken), 123456789);
+    address owner2 = vault.getCommitment(address(mockToken), 987654321);
+    address owner3 = vault.getCommitment(address(mockToken), 555666777);
 
     assertEq(owner1, alice, "Commitment 1 should be assigned to Alice");
     assertEq(owner2, alice, "Commitment 2 should be assigned to Alice");
@@ -161,9 +161,9 @@ contract VaultDepositTest is VaultTest, IVaultEvents {
     vault.deposit(depositParams, proof);
 
     // Verify commitments were created
-    (address owner1,) = vault.getCommitment(address(mockToken), 123456789);
-    (address owner2,) = vault.getCommitment(address(mockToken), 987654321);
-    (address owner3,) = vault.getCommitment(address(mockToken), 555666777);
+    address owner1 = vault.getCommitment(address(mockToken), 123456789);
+    address owner2 = vault.getCommitment(address(mockToken), 987654321);
+    address owner3 = vault.getCommitment(address(mockToken), 555666777);
 
     assertEq(owner1, alice, "Commitment 1 should be assigned to Alice");
     assertEq(owner2, bob, "Commitment 2 should be assigned to Bob");
@@ -440,9 +440,9 @@ contract VaultDepositTest is VaultTest, IVaultEvents {
     vault.deposit(depositParams, proof);
 
     // Verify commitments were created correctly despite different depositor
-    (address owner1,) = vault.getCommitment(address(mockToken), 123456789);
-    (address owner2,) = vault.getCommitment(address(mockToken), 987654321);
-    (address owner3,) = vault.getCommitment(address(mockToken), 555666777);
+    address owner1 = vault.getCommitment(address(mockToken), 123456789);
+    address owner2 = vault.getCommitment(address(mockToken), 987654321);
+    address owner3 = vault.getCommitment(address(mockToken), 555666777);
 
     assertEq(owner1, alice, "Commitment 1 should be assigned to Alice");
     assertEq(owner2, bob, "Commitment 2 should be assigned to Bob");
@@ -484,7 +484,7 @@ contract VaultDepositTest is VaultTest, IVaultEvents {
     emit CommitmentCreated(charlie, address(mockToken), 555666777, "metadata3");
 
     vm.expectEmit(true, true, false, true);
-    emit TokenDeposited(alice, address(mockToken), defaultDepositAmount);
+    emit Deposit(alice, address(mockToken), defaultDepositAmount);
 
     vault.deposit(depositParams, proof);
     vm.stopPrank();
@@ -502,9 +502,9 @@ contract VaultDepositTest is VaultTest, IVaultEvents {
     );
 
     // Verify all commitments were created for Alice
-    (address owner1,) = vault.getCommitment(address(mockToken), 123456789);
-    (address owner2,) = vault.getCommitment(address(mockToken), 987654321);
-    (address owner3,) = vault.getCommitment(address(mockToken), 555666777);
+    address owner1 = vault.getCommitment(address(mockToken), 123456789);
+    address owner2 = vault.getCommitment(address(mockToken), 987654321);
+    address owner3 = vault.getCommitment(address(mockToken), 555666777);
 
     assertEq(owner1, alice, "Commitment 1 should be assigned to Alice");
     assertEq(owner2, alice, "Commitment 2 should be assigned to Alice");
@@ -523,9 +523,9 @@ contract VaultDepositTest is VaultTest, IVaultEvents {
     );
 
     // Verify commitments were created for different owners
-    (address owner1,) = vault.getCommitment(address(mockToken), 123456789);
-    (address owner2,) = vault.getCommitment(address(mockToken), 987654321);
-    (address owner3,) = vault.getCommitment(address(mockToken), 555666777);
+    address owner1 = vault.getCommitment(address(mockToken), 123456789);
+    address owner2 = vault.getCommitment(address(mockToken), 987654321);
+    address owner3 = vault.getCommitment(address(mockToken), 555666777);
 
     assertEq(owner1, alice, "Commitment 1 should be assigned to Alice");
     assertEq(owner2, bob, "Commitment 2 should be assigned to Bob");
@@ -634,7 +634,7 @@ contract VaultDepositTest is VaultTest, IVaultEvents {
     emit CommitmentCreated(charlie, address(mockToken), 555666777, "metadata3");
 
     vm.expectEmit(true, true, false, true);
-    emit TokenDeposited(alice, address(mockToken), defaultDepositAmount);
+    emit Deposit(alice, address(mockToken), defaultDepositAmount);
 
     vm.startPrank(alice);
     vault.depositWithPermit(depositParams, proof, block.timestamp + 1000, signature.v, signature.r, signature.s);
@@ -682,9 +682,9 @@ contract VaultDepositTest is VaultTest, IVaultEvents {
       "Forwarder fee recipient should receive correct fee"
     );
     // Verify commitments were created
-    (address owner1,) = vault.getCommitment(address(mockToken), 123456789);
-    (address owner2,) = vault.getCommitment(address(mockToken), 987654321);
-    (address owner3,) = vault.getCommitment(address(mockToken), 555666777);
+    address owner1 = vault.getCommitment(address(mockToken), 123456789);
+    address owner2 = vault.getCommitment(address(mockToken), 987654321);
+    address owner3 = vault.getCommitment(address(mockToken), 555666777);
 
     assertEq(owner1, alice, "Commitment 1 should be assigned to Alice");
     assertEq(owner2, bob, "Commitment 2 should be assigned to Bob");

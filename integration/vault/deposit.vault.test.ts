@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers";
-import { DepositParamsStruct } from "../../typechain-types/src/Vault.sol/Vault";
+import { DepositParamsStruct } from "../../typechain-types/src/Vault";
 import {
   DepositTestData,
   deployVaultFixture,

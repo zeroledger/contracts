@@ -9,7 +9,7 @@ import {
   TransactionStruct,
   OutputsOwnersStruct,
   Vault,
-} from "../../typechain-types/src/Vault.sol/Vault";
+} from "../../typechain-types/src/Vault";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { Administrator, Forwarder, Verifiers } from "../../typechain-types/src";
 import { ProtocolManager } from "../../typechain-types/src/ProtocolManager";

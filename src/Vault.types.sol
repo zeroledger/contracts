@@ -48,20 +48,20 @@ interface IVaultEvents {
   /**
    * @dev Emitted when `user` deposit `amount` `token` into vault
    */
-  event Deposit(address indexed user, address indexed token, uint256 amount);
+  event Deposit(address indexed user, address indexed token, uint256 indexed amount);
   /**
    * @dev Emitted when commitment for `owner` with `poseidonHash` and `metadata` is created in scope of `token`
    */
-  event CommitmentCreated(address indexed owner, address indexed token, uint256 commitment, bytes metadata);
+  event CommitmentCreated(address indexed owner, address indexed token, uint256 poseidonHash, bytes metadata);
   /**
    * @dev Emitted when commitment for `owner` with `poseidonHash` and `metadata` is removed (deleted) in scope of
    * `token`
    */
-  event CommitmentRemoved(address indexed owner, address indexed token, uint256 commitment);
+  event CommitmentRemoved(address indexed owner, address indexed token, uint256 poseidonHash);
   /**
    * @dev Emitted when `owner` spend a confidential amount of some `token`.
    */
-  event Spend(address indexed owner, address indexed token, uint256[] inputCommitments, uint256[] outputCommitments);
+  event Spend(address indexed owner, address indexed token, uint256[] inputHashes, uint256[] outputHashes);
   /**
    * @dev Emitted when `owner` withdraw `total` amounts of token from the vault.
    */

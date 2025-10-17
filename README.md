@@ -29,21 +29,25 @@ The ZeroLedger system consists of three main contracts designed for modularity a
 
 - **Forwarder**: Supports meta-transactions and batching operations. This contract is permissionless and enables users to execute transactions without paying gas fees directly, improving user experience and enabling complex transaction batching.
 
-- **ProtocolManager**: Manages protocol-level parameters including fees, upgrades, and administrative functions.
+- **ProtocolManager**: Manages protocol-level parameters like fees and max protocol tvl.
+
+- **Administrator**: Manages protocol contracts administrative functions like upgrades or emergency pausing
 
 Deployed on Base Sepolia testnet:
 
-- **Vault**: `0x56C470FfEAB8A561A64f5481BE75A620e052Fd44`
-- **ProtocolManager**: `0x4Cf13dF8454C57E58Bb924aC126caEB87B9193D7`
-- **Forwarder**: `0x46386D904916CdB4Fada9ae7347F5a6579775Cda`
+- **Vault**: `0xa4c6FC97514a3cC010FC555C02711d8B1Ff24291`
+- **ProtocolManager**: `0x5a81F35020C2b124d3631c39532E7F7813746c32`
+- **Forwarder**: `0xE8653c7044eFB585FE39185941590251c3Db4591`
+- **Administrator**: `0x059Be04D39201b2fF0aabC37C6fb421C05bFc7C1`
 
 ### Management & Security
 
 **Multisig Governance**: All administrative functions, including fee updates, contract upgrades, and security measures, are managed through multisig wallets. This ensures that no single entity can make critical changes to the protocol.
 
-- **Admin Multisig (3/5)**: Controls protocol upgrades and role management
-- **Security Council Multisig (1/2)**: Manages emergency pauses and security functions  
-- **Treasury Manager Multisig (2/3)**: Controls fee parameters and treasury operations
+- **Admin Multisig**: Controls protocol roles management
+- **Maintainer Multisig**: Controls protocol contracts upgrades
+- **Security Council Multisig**: Manages emergency pauses and security functions  
+- **Treasury Manager Multisig**: Controls fee parameters and treasury operations
 
 ### Zero-Knowledge Circuits
 
@@ -121,55 +125,46 @@ cp .env.example .env
 
 ```sh
 contracts/
-├── src/                   # Smart contract source files
-│   ├── Vault.sol          # Main vault contract
-│   ├── Vault.types.sol    # Type definitions
-│   ├── Verifiers.sol       # ZK proof verifiers
-│   ├── MockERC20.sol      # Test token
-│   └── Inputs.lib.sol     # Input utilities
-├── ignition/              # Zero-knowledge circuits
-│   ├── modules/           # Circom circuit definitions
-│   └── deployments/       # Circuit utilities
-├── test/                  # Foundry unit tests
-├── integration/           # Hardhat integration tests
-├── circuits/              # Zero-knowledge circuits (git module)
-├── lib/                   # Foundry dependencies (git module)
-└── abi/                   # Contract ABIs
+├── src/                      # Smart contract source files
+│   ├── Administrator.sol     # Contract to admin roles for Forwarder, Vault, ProtocolManager contract administration
+│   ├── Forwarder.sol         # Forwarder contract with ERC6492 support
+│   ├── ProtocolManager.sol   # Contract to manage protocol parameters
+│   ├── Vault.sol             # Main vault contract
+│   ├── Vault.types.sol       # Vault types & interfaces
+│   ├── Verifiers.sol          # ZK proof verifiers umbrella contract
+│   ├── Roles.lib.sol         # Roles constants
+│   └── Inputs.lib.sol        # Input utilities
+├── helpers/                  # Helpers contracts
+│   ├── MockERC20.sol         # Test token
+│   └── Proxy.sol/            # ERC1967Proxy import
+├── ignition/                 # Zero-knowledge circuits
+│   ├── modules/              # Circom circuit definitions
+│   └── deployments/          # Circuit utilities
+├── test/                     # Foundry unit tests
+├── integration/              # Hardhat integration tests
+├── circuits/                 # Zero-knowledge circuits (git module)
+├── lib/                      # Foundry dependencies (git module)
+└── abi/                      # Contract ABIs
 ```
 
 ## Environment Variables
 
-Create a `.env` file with the following variables:
-
-```env
-# Private key for deployment (without 0x prefix)
-PRIVATE_KEY=your_private_key_here
-
-# RPC URLs
-SEPOLIA_RPC=https://sepolia.infura.io/v3/your_project_id
-ARBITRUM_SEPOLIA_RPC=https://sepolia-rollup.arbitrum.io/rpc
-OP_SEPOLIA_RPC=https://sepolia.optimism.io
-
-# API Keys for verification
-ETHERSCAN_API_KEY=your_etherscan_api_key
-ARBISCAN_API_KEY=your_arbiscan_api_key
-OPSCAN_API_KEY=your_opscan_api_key
-```
+Create a `.env` based on `.env.example`
 
 ## Supported Networks
 
 - **Local Development**: Hardhat, Localhost
-- **Testnets**: Sepolia, Arbitrum Sepolia, Optimism Sepolia
-- **Mainnets**: Configurable via hardhat.config.js
+- **Testnets**: BaseSepolia
+
+Networks are configurable via hardhat.config.js
 
 ## Security
 
-- **Audited Dependencies**: Uses OpenZeppelin contracts
+- **Audited Dependencies**: Uses OpenZeppelin & solady contracts
 - **Reentrancy Protection**: Built-in guards against reentrancy attacks
 - **Access Control**: Proper authorization mechanisms with multisig governance
 - **Zero-Knowledge Proofs**: Cryptographic privacy guarantees
-- **Multisig Governance**: All administrative functions controlled by multisig wallets
-- **Comprehensive Testing**: Extensive test coverage: In progress  
+- **Comprehensive Testing**: Extensive test coverage: In progress
 
 ## Contributing
 
@@ -186,11 +181,12 @@ OPSCAN_API_KEY=your_opscan_api_key
 - [Hardhat Documentation](https://hardhat.org/docs)
 - [Circom Documentation](https://docs.circom.io/)
 - [OpenZeppelin Contracts](https://docs.openzeppelin.com/contracts/)
+- [Solady Documentation](https://vectorized.github.io/solady/#/)
 - [Solidity Documentation](https://docs.soliditylang.org/)
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the GNU v3.0 License - see the [LICENSE](LICENSE) file for details.
 
 ## Support
 
@@ -198,7 +194,7 @@ If you encounter any issues or have questions:
 
 - Open an [issue](https://github.com/zeroledger/contracts/issues)
 - Check the [documentation](https://github.com/zeroledger/protocol)
-- Join our community discussions [telegram]()
+- Join our community discussions [telegram](https://t.me/+fCgwViQAehY0NTEy)
 
 ---
 

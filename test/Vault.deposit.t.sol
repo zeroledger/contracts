@@ -61,9 +61,9 @@ contract VaultDepositTest is VaultTest, IVaultEvents {
       "Forwarder fee recipient should receive correct fee"
     );
     // Verify commitments were created
-    (address owner1,) = vault.getCommitment(address(mockToken), 123456789);
-    (address owner2,) = vault.getCommitment(address(mockToken), 987654321);
-    (address owner3,) = vault.getCommitment(address(mockToken), 555666777);
+    address owner1 = vault.getCommitment(address(mockToken), 123456789);
+    address owner2 = vault.getCommitment(address(mockToken), 987654321);
+    address owner3 = vault.getCommitment(address(mockToken), 555666777);
 
     assertEq(owner1, alice, "Commitment 1 should be assigned to Alice");
     assertEq(owner2, bob, "Commitment 2 should be assigned to Bob");
@@ -100,11 +100,11 @@ contract VaultDepositTest is VaultTest, IVaultEvents {
     vault.deposit(depositParams, proof);
 
     // Verify only non-shared commitments were created
-    (address owner1,) = vault.getCommitment(address(mockToken), 123456789);
-    (address owner2,) = vault.getCommitment(
+    address owner1 = vault.getCommitment(address(mockToken), 123456789);
+    address owner2 = vault.getCommitment(
       address(mockToken), 16345784317541686154474118656352090725662212393131703302641232392927716723243
     );
-    (address owner3,) = vault.getCommitment(address(mockToken), 555666777);
+    address owner3 = vault.getCommitment(address(mockToken), 555666777);
 
     assertEq(owner1, alice, "Commitment 1 should be assigned to Alice");
     assertEq(owner2, address(0), "Shared input should not create commitment");
@@ -125,9 +125,9 @@ contract VaultDepositTest is VaultTest, IVaultEvents {
     );
 
     // Verify all commitments were created for Alice
-    (address owner1,) = vault.getCommitment(address(mockToken), 123456789);
-    (address owner2,) = vault.getCommitment(address(mockToken), 987654321);
-    (address owner3,) = vault.getCommitment(address(mockToken), 555666777);
+    address owner1 = vault.getCommitment(address(mockToken), 123456789);
+    address owner2 = vault.getCommitment(address(mockToken), 987654321);
+    address owner3 = vault.getCommitment(address(mockToken), 555666777);
 
     assertEq(owner1, alice, "Commitment 1 should be assigned to Alice");
     assertEq(owner2, alice, "Commitment 2 should be assigned to Alice");
@@ -161,9 +161,9 @@ contract VaultDepositTest is VaultTest, IVaultEvents {
     vault.deposit(depositParams, proof);
 
     // Verify commitments were created
-    (address owner1,) = vault.getCommitment(address(mockToken), 123456789);
-    (address owner2,) = vault.getCommitment(address(mockToken), 987654321);
-    (address owner3,) = vault.getCommitment(address(mockToken), 555666777);
+    address owner1 = vault.getCommitment(address(mockToken), 123456789);
+    address owner2 = vault.getCommitment(address(mockToken), 987654321);
+    address owner3 = vault.getCommitment(address(mockToken), 555666777);
 
     assertEq(owner1, alice, "Commitment 1 should be assigned to Alice");
     assertEq(owner2, bob, "Commitment 2 should be assigned to Bob");
@@ -440,9 +440,9 @@ contract VaultDepositTest is VaultTest, IVaultEvents {
     vault.deposit(depositParams, proof);
 
     // Verify commitments were created correctly despite different depositor
-    (address owner1,) = vault.getCommitment(address(mockToken), 123456789);
-    (address owner2,) = vault.getCommitment(address(mockToken), 987654321);
-    (address owner3,) = vault.getCommitment(address(mockToken), 555666777);
+    address owner1 = vault.getCommitment(address(mockToken), 123456789);
+    address owner2 = vault.getCommitment(address(mockToken), 987654321);
+    address owner3 = vault.getCommitment(address(mockToken), 555666777);
 
     assertEq(owner1, alice, "Commitment 1 should be assigned to Alice");
     assertEq(owner2, bob, "Commitment 2 should be assigned to Bob");
@@ -502,9 +502,9 @@ contract VaultDepositTest is VaultTest, IVaultEvents {
     );
 
     // Verify all commitments were created for Alice
-    (address owner1,) = vault.getCommitment(address(mockToken), 123456789);
-    (address owner2,) = vault.getCommitment(address(mockToken), 987654321);
-    (address owner3,) = vault.getCommitment(address(mockToken), 555666777);
+    address owner1 = vault.getCommitment(address(mockToken), 123456789);
+    address owner2 = vault.getCommitment(address(mockToken), 987654321);
+    address owner3 = vault.getCommitment(address(mockToken), 555666777);
 
     assertEq(owner1, alice, "Commitment 1 should be assigned to Alice");
     assertEq(owner2, alice, "Commitment 2 should be assigned to Alice");
@@ -523,9 +523,9 @@ contract VaultDepositTest is VaultTest, IVaultEvents {
     );
 
     // Verify commitments were created for different owners
-    (address owner1,) = vault.getCommitment(address(mockToken), 123456789);
-    (address owner2,) = vault.getCommitment(address(mockToken), 987654321);
-    (address owner3,) = vault.getCommitment(address(mockToken), 555666777);
+    address owner1 = vault.getCommitment(address(mockToken), 123456789);
+    address owner2 = vault.getCommitment(address(mockToken), 987654321);
+    address owner3 = vault.getCommitment(address(mockToken), 555666777);
 
     assertEq(owner1, alice, "Commitment 1 should be assigned to Alice");
     assertEq(owner2, bob, "Commitment 2 should be assigned to Bob");
@@ -682,9 +682,9 @@ contract VaultDepositTest is VaultTest, IVaultEvents {
       "Forwarder fee recipient should receive correct fee"
     );
     // Verify commitments were created
-    (address owner1,) = vault.getCommitment(address(mockToken), 123456789);
-    (address owner2,) = vault.getCommitment(address(mockToken), 987654321);
-    (address owner3,) = vault.getCommitment(address(mockToken), 555666777);
+    address owner1 = vault.getCommitment(address(mockToken), 123456789);
+    address owner2 = vault.getCommitment(address(mockToken), 987654321);
+    address owner3 = vault.getCommitment(address(mockToken), 555666777);
 
     assertEq(owner1, alice, "Commitment 1 should be assigned to Alice");
     assertEq(owner2, bob, "Commitment 2 should be assigned to Bob");

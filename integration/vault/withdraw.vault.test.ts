@@ -218,10 +218,10 @@ describe("Vault Withdraw Tests", function () {
       await verifyCommitmentRemoved(commitmentData.hashes[0], vault, mockToken);
 
       // Verify other commitments still exist
-      const commitment1 = await vault.getCommitment(await mockToken.getAddress(), commitmentData.hashes[1]);
-      const commitment2 = await vault.getCommitment(await mockToken.getAddress(), commitmentData.hashes[2]);
-      expect(commitment1.owner).to.equal(user.address);
-      expect(commitment2.owner).to.equal(user.address);
+      const commitment1Owner = await vault.getCommitment(await mockToken.getAddress(), commitmentData.hashes[1]);
+      const commitment2Owner = await vault.getCommitment(await mockToken.getAddress(), commitmentData.hashes[2]);
+      expect(commitment1Owner).to.equal(user.address);
+      expect(commitment2Owner).to.equal(user.address);
 
       verifyWithdrawEvents(receipt);
     });
@@ -256,7 +256,7 @@ describe("Vault Withdraw Tests", function () {
             },
           ],
         ),
-      ).to.be.revertedWith("Vault: Commitment not found");
+      ).to.be.revertedWith("Vault: Only assigned address can withdraw");
     });
 
     it("should fail when withdrawing with wrong amount", async function () {
@@ -294,7 +294,7 @@ describe("Vault Withdraw Tests", function () {
             },
           ],
         ),
-      ).to.be.revertedWith("Vault: Commitment not found");
+      ).to.be.revertedWith("Vault: Only assigned address can withdraw");
     });
 
     it("should fail when withdrawing with wrong sValue", async function () {
@@ -319,7 +319,7 @@ describe("Vault Withdraw Tests", function () {
             },
           ],
         ),
-      ).to.be.revertedWith("Vault: Commitment not found");
+      ).to.be.revertedWith("Vault: Only assigned address can withdraw");
     });
 
     it("should fail when withdrawing commitment owned by different user", async function () {
@@ -422,7 +422,7 @@ describe("Vault Withdraw Tests", function () {
             },
           ],
         ),
-      ).to.be.revertedWith("Vault: Commitment not found");
+      ).to.be.revertedWith("Vault: Only assigned address can withdraw");
     });
 
     it("should fail with zero amount", async function () {

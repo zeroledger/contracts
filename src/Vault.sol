@@ -4,8 +4,10 @@ pragma solidity >=0.8.21;
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
-
 import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import {AccessManagedUpgradeable} from
+  "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 
 // not upgradable contracts & interfaces
 
@@ -14,13 +16,11 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Verifiers} from "src/Verifiers.sol";
-import {AccessManagedUpgradeable} from
-  "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 
 // libs
 import {PoseidonT3} from "@poseidon-solidity/PoseidonT3.sol";
 import {
-  Commitment,
+  IVault,
   DepositCommitmentParams,
   DepositParams,
   OutputsOwners,
@@ -49,20 +49,19 @@ contract Vault is
   AccessManagedUpgradeable,
   ReentrancyGuardUpgradeable,
   PausableUpgradeable,
-  IVaultEvents
+  IVault
 {
   using SafeERC20 for IERC20;
 
   struct State {
-    // Mapping to track if a commitment hash has been deposited
-    mapping(address => mapping(uint256 => Commitment)) commitmentsMap;
+    mapping(address token => mapping(uint256 commitmentId => address owner)) commitmentsMap;
     Verifiers verifiers;
     address trustedForwarder;
     ProtocolManager manager;
   }
 
-  // keccak256(abi.encode(uint256(keccak256("storage.zeroledger")) - 1)) & ~bytes32(uint256(0xff))
-  bytes32 internal constant STORAGE_LOCATION = 0x60ea44b2fada15ab3d55d1b53c0f3a65e4a3da4f8f909905e012d14a90d3b300;
+  // keccak256(abi.encode(uint256(keccak256("storage.zeroledger.Vault")) - 1)) & ~bytes32(uint256(0xff))
+  bytes32 internal constant STORAGE_LOCATION = 0x4ff14ff3d6d11019b33840a324a7911c48c76118cab5bf9ddf96218a30397600;
 
   function _getStorage() internal pure returns (State storage $) {
     // solhint-disable-next-line no-inline-assembly
@@ -178,7 +177,7 @@ contract Vault is
     State storage $ = _getStorage();
     t.safeTransferFrom(_msgSender(), address($.manager), $.manager.getFees(depositParams.token).deposit);
     t.safeTransferFrom(_msgSender(), depositParams.forwarderFeeRecipient, depositParams.forwarderFee);
-    emit TokenDeposited(_msgSender(), depositParams.token, depositParams.amount);
+    emit Deposit(_msgSender(), depositParams.token, depositParams.amount);
   }
 
   /**
@@ -215,7 +214,7 @@ contract Vault is
     t.safeTransferFrom(_msgSender(), address($.manager), depositFee);
     t.safeTransferFrom(_msgSender(), depositParams.forwarderFeeRecipient, depositParams.forwarderFee);
 
-    emit TokenDeposited(_msgSender(), depositParams.token, depositParams.amount);
+    emit Deposit(_msgSender(), depositParams.token, depositParams.amount);
   }
 
   function _deposit(DepositParams calldata depositParams, uint256[24] calldata proof) internal {
@@ -239,8 +238,8 @@ contract Vault is
       if (poseidonHash == InputsLib.SHARED_INPUT) {
         continue;
       }
-      require($.commitmentsMap[token][poseidonHash].owner == address(0), "Vault: Commitment already used");
-      $.commitmentsMap[token][poseidonHash] = Commitment({owner: depositCommitmentParams[i].owner, locked: false});
+      require($.commitmentsMap[token][poseidonHash] == address(0), "Vault: Commitment already used");
+      $.commitmentsMap[token][poseidonHash] = depositCommitmentParams[i].owner;
       emit CommitmentCreated(
         depositCommitmentParams[i].owner, token, poseidonHash, depositCommitmentParams[i].metadata
       );
@@ -257,7 +256,7 @@ contract Vault is
         continue;
       }
       require(
-        _getStorage().commitmentsMap[transaction.token][poseidonHash].owner == _msgSender(),
+        _getStorage().commitmentsMap[transaction.token][poseidonHash] == _msgSender(),
         "Vault: Input commitment not found"
       );
     }
@@ -273,7 +272,7 @@ contract Vault is
       if (inputHash == InputsLib.SHARED_INPUT) {
         continue;
       }
-      address inputOwner = $.commitmentsMap[transaction.token][inputHash].owner;
+      address inputOwner = $.commitmentsMap[transaction.token][inputHash];
       delete $.commitmentsMap[transaction.token][inputHash];
       emit CommitmentRemoved(inputOwner, transaction.token, inputHash);
     }
@@ -294,7 +293,7 @@ contract Vault is
         if (outputHash == InputsLib.SHARED_INPUT) {
           continue;
         }
-        $.commitmentsMap[transaction.token][outputHash] = Commitment({owner: outputOwner, locked: false});
+        $.commitmentsMap[transaction.token][outputHash] = outputOwner;
         emit CommitmentCreated(outputOwner, transaction.token, outputHash, transaction.metadata[outputIndex]);
       }
     }
@@ -362,7 +361,7 @@ contract Vault is
   /**
    * @dev Removes commitment by providing amount and secret
    */
-  function redeemCommitment(address token, WithdrawItem calldata item) internal {
+  function redeemCommitment(address token, address commitmentOwner, WithdrawItem calldata item) internal {
     require(token != address(0), "Vault: Invalid token address");
     require(item.amount > 0, "Vault: Amount must be greater than 0");
 
@@ -373,13 +372,11 @@ contract Vault is
 
     State storage $ = _getStorage();
 
-    Commitment storage commitment = $.commitmentsMap[token][poseidonHash];
-    require(commitment.owner != address(0), "Vault: Commitment not found");
-    require(commitment.owner == _msgSender(), "Vault: Only assigned address can withdraw");
+    require($.commitmentsMap[token][poseidonHash] == commitmentOwner, "Vault: Only assigned address can withdraw");
 
     delete $.commitmentsMap[token][poseidonHash];
 
-    emit CommitmentRemoved(_msgSender(), token, poseidonHash);
+    emit CommitmentRemoved(commitmentOwner, token, poseidonHash);
   }
 
   /**
@@ -391,8 +388,9 @@ contract Vault is
     whenNotPaused
   {
     uint256 totalProvided = 0;
+    address commitmentOwner = _msgSender();
     for (uint256 i = 0; i < items.length; i++) {
-      redeemCommitment(token, items[i]);
+      redeemCommitment(token, commitmentOwner, items[i]);
       totalProvided += items[i].amount;
     }
     uint240 totalRequested = 0;
@@ -420,9 +418,8 @@ contract Vault is
   /**
    * @dev Get commitment details for a given token and poseidon hash
    */
-  function getCommitment(address token, uint256 poseidonHash) external view returns (address owner, bool locked) {
-    Commitment memory commitment = _getStorage().commitmentsMap[token][poseidonHash];
-    return (commitment.owner, commitment.locked);
+  function getCommitment(address token, uint256 poseidonHash) external view returns (address owner) {
+    return _getStorage().commitmentsMap[token][poseidonHash];
   }
 
   function getTrustedForwarder() external view returns (address) {

@@ -267,9 +267,8 @@ export function verifyDepositBalances(
 // Helper function to verify commitments were created
 export async function verifyCommitments(hashes: string[], userAddress: string, vault: Vault, mockToken: MockERC20) {
   for (let i = 0; i < hashes.length; i++) {
-    const commitment = await vault.getCommitment(await mockToken.getAddress(), hashes[i]);
-    expect(commitment.owner).to.equal(userAddress);
-    expect(commitment.locked).to.be.false;
+    const commitmentOwner = await vault.getCommitment(await mockToken.getAddress(), hashes[i]);
+    expect(commitmentOwner).to.equal(userAddress);
   }
 }
 
@@ -328,8 +327,8 @@ export function verifyWithdrawBalances(
 
 // Helper function to verify commitment was removed
 export async function verifyCommitmentRemoved(hash: string, vault: Vault, mockToken: MockERC20) {
-  const commitment = await vault.getCommitment(await mockToken.getAddress(), hash);
-  expect(commitment.owner).to.equal(ethers.ZeroAddress);
+  const commitmentOwner = await vault.getCommitment(await mockToken.getAddress(), hash);
+  expect(commitmentOwner).to.equal(ethers.ZeroAddress);
 }
 
 // Helper function to verify withdraw events
@@ -448,8 +447,8 @@ export function verifySpendEvents(receipt: any, inputHashes: string[], outputHas
 // Helper function to verify input commitments were removed
 export async function verifyInputCommitmentsRemoved(inputHashes: string[], vault: Vault, mockToken: MockERC20) {
   for (const hash of inputHashes) {
-    const commitment = await vault.getCommitment(await mockToken.getAddress(), hash);
-    expect(commitment.owner).to.equal(ethers.ZeroAddress);
+    const commitmentOwner = await vault.getCommitment(await mockToken.getAddress(), hash);
+    expect(commitmentOwner).to.equal(ethers.ZeroAddress);
   }
 }
 
@@ -461,9 +460,8 @@ export async function verifyOutputCommitmentsCreated(
   mockToken: MockERC20,
 ) {
   for (const hash of outputHashes) {
-    const commitment = await vault.getCommitment(await mockToken.getAddress(), hash);
-    expect(commitment.owner).to.equal(userAddress);
-    expect(commitment.locked).to.be.false;
+    const commitmentOwner = await vault.getCommitment(await mockToken.getAddress(), hash);
+    expect(commitmentOwner).to.equal(userAddress);
   }
 }
 

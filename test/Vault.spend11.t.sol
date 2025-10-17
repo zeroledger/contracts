@@ -61,8 +61,8 @@ contract VaultSpend11Test is VaultTest, IVaultEvents {
     uint256[24] memory proof = getDummyProof();
 
     // Record initial state
-    (address inputOwnerBefore,) = vault.getCommitment(address(mockToken), inputHash);
-    (address outputOwnerBefore,) = vault.getCommitment(address(mockToken), outputHash);
+    address inputOwnerBefore = vault.getCommitment(address(mockToken), inputHash);
+    address outputOwnerBefore = vault.getCommitment(address(mockToken), outputHash);
 
     // Expect events to be emitted
     vm.expectEmit(true, true, false, true);
@@ -82,11 +82,11 @@ contract VaultSpend11Test is VaultTest, IVaultEvents {
     vm.stopPrank();
 
     // Verify the input commitment was removed
-    (address inputOwnerAfter,) = vault.getCommitment(address(mockToken), inputHash);
+    address inputOwnerAfter = vault.getCommitment(address(mockToken), inputHash);
     assertEq(inputOwnerAfter, address(0), "Input commitment should be removed");
 
     // Verify the output commitment was created
-    (address outputOwnerAfter,) = vault.getCommitment(address(mockToken), outputHash);
+    address outputOwnerAfter = vault.getCommitment(address(mockToken), outputHash);
     assertEq(outputOwnerAfter, alice, "Output commitment should be assigned to Alice");
 
     // Verify the input commitment was originally assigned to Alice

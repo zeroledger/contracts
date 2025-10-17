@@ -1,12 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.21;
 
-// Represents a UTXO commitment: who can spend it and whether it's used
-struct Commitment {
-  address owner; // authorized spender (via ECDSA)
-  bool locked; // true if already locked in conditional spending
-}
-
 struct DepositCommitmentParams {
   uint256 poseidonHash;
   address owner;
@@ -48,4 +42,34 @@ struct WithdrawRecipient {
 struct PublicOutput {
   address owner;
   uint240 amount;
+}
+
+interface IVault {
+  /**
+   * @dev Emitted when `user` deposit `amount` `token` into vault
+   */
+  event Deposit(address indexed user, address indexed token, uint256 amount);
+  /**
+   * @dev Emitted when commitment for `owner` with `poseidonHash` and `metadata` is created in scope of `token`
+   */
+  event CommitmentCreated(address indexed owner, address indexed token, uint256 commitment, bytes metadata);
+  /**
+   * @dev Emitted when commitment for `owner` with `poseidonHash` and `metadata` is removed (deleted) in scope of
+   * `token`
+   */
+  event CommitmentRemoved(address indexed owner, address indexed token, uint256 commitment);
+  /**
+   * @dev Emitted when `owner` spend a confidential amount of some `token`.
+   */
+  event Spend(address indexed owner, address indexed token, uint256[] inputCommitments, uint256[] outputCommitments);
+  /**
+   * @dev Emitted when `owner` withdraw `total` amounts of token from the vault.
+   */
+  event Withdrawal(address indexed user, address indexed token, uint256 indexed total);
+}
+
+interface ICommitmentsRecipient {
+  function onCommitmentsReceived(address from, uint256[] calldata commitments, bytes calldata data)
+    external
+    returns (bytes4);
 }

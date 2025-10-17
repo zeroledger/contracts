@@ -276,8 +276,8 @@ export async function verifyCommitments(hashes: string[], userAddress: string, v
 export function verifyDepositEvents(receipt: any) {
   expect(receipt?.logs).to.have.length.greaterThan(0);
 
-  // Check for TokenDeposited event
-  const tokenDepositedEvent = receipt?.logs?.find((log: any) => log.fragment?.name === "TokenDeposited");
+  // Check for Deposit event
+  const tokenDepositedEvent = receipt?.logs?.find((log: any) => log.fragment?.name === "Deposit");
   expect(tokenDepositedEvent).to.not.be.undefined;
 
   // Check for CommitmentCreated events
@@ -433,8 +433,8 @@ export async function createSpendTransaction(
 export function verifySpendEvents(receipt: any, inputHashes: string[], outputHashes: string[]) {
   expect(receipt?.logs).to.have.length.greaterThan(0);
 
-  // Check for TransactionSpent event
-  const transactionSpentEvent = receipt?.logs?.find((log: any) => log.fragment?.name === "TransactionSpent");
+  // Check for Spend event
+  const transactionSpentEvent = receipt?.logs?.find((log: any) => log.fragment?.name === "Spend");
   expect(transactionSpentEvent).to.not.be.undefined;
 
   const commitmentRemovedEvents = receipt?.logs?.filter((log: any) => log.fragment?.name === "CommitmentRemoved");

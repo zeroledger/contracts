@@ -3,7 +3,7 @@ pragma solidity >=0.8.21;
 
 import {VaultTest} from "./VaultTest.util.sol";
 import {Transaction, OutputsOwners, PublicOutput} from "src/Vault.types.sol";
-import {IVaultEvents} from "src/Vault.sol";
+import {IVaultEvents} from "src/Vault.types.sol";
 import {Fees} from "src/ProtocolManager.sol";
 
 contract VaultSpend11Test is VaultTest, IVaultEvents {
@@ -72,9 +72,7 @@ contract VaultSpend11Test is VaultTest, IVaultEvents {
     emit CommitmentCreated(alice, address(mockToken), outputHash, "spend11_metadata");
 
     vm.expectEmit(true, true, false, true);
-    emit TransactionSpent(
-      alice, address(mockToken), transaction.inputsPoseidonHashes, transaction.outputsPoseidonHashes
-    );
+    emit Spend(alice, address(mockToken), transaction.inputsPoseidonHashes, transaction.outputsPoseidonHashes);
 
     // Execute the spend transaction
     vm.startPrank(alice);

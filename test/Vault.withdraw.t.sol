@@ -3,7 +3,7 @@ pragma solidity >=0.8.21;
 
 import {VaultTest} from "./VaultTest.util.sol";
 import {WithdrawItem, WithdrawRecipient} from "src/Vault.types.sol";
-import {IVaultEvents} from "src/Vault.sol";
+import {IVaultEvents} from "src/Vault.types.sol";
 import {Fees} from "src/ProtocolManager.sol";
 
 contract VaultWithdrawTest is VaultTest, IVaultEvents {
@@ -63,7 +63,7 @@ contract VaultWithdrawTest is VaultTest, IVaultEvents {
     emit CommitmentRemoved(alice, address(mockToken), poseidonHash1);
 
     vm.expectEmit(true, true, false, true);
-    emit Withdrawal(alice, address(mockToken), WITHDRAW_AMOUNT_1);
+    emit Withdraw(alice, address(mockToken), WITHDRAW_AMOUNT_1);
 
     // Execute withdraw
     vm.startPrank(alice);
@@ -98,7 +98,7 @@ contract VaultWithdrawTest is VaultTest, IVaultEvents {
     emit CommitmentRemoved(alice, address(mockToken), poseidonHash3);
 
     vm.expectEmit(true, true, false, true);
-    emit Withdrawal(alice, address(mockToken), WITHDRAW_AMOUNT_2 + WITHDRAW_AMOUNT_3);
+    emit Withdraw(alice, address(mockToken), WITHDRAW_AMOUNT_2 + WITHDRAW_AMOUNT_3);
 
     // Execute withdraw
     vm.startPrank(alice);

@@ -5,7 +5,6 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/U
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
-import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {AccessManagedUpgradeable} from
   "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 
@@ -26,18 +25,11 @@ import {
   OutputsOwners,
   Transaction,
   WithdrawItem,
-  WithdrawRecipient
+  WithdrawRecipient,
+  ICommitmentsRecipient
 } from "./Vault.types.sol";
 import {InputsLib} from "./Inputs.lib.sol";
 import {ProtocolManager} from "src/ProtocolManager.sol";
-
-interface IVaultEvents {
-  event TokenDeposited(address indexed user, address indexed token, uint256 amount);
-  event CommitmentCreated(address indexed owner, address indexed token, uint256 poseidonHash, bytes metadata);
-  event CommitmentRemoved(address indexed owner, address indexed token, uint256 poseidonHash);
-  event TransactionSpent(address indexed owner, address indexed token, uint256[] inputHashes, uint256[] outputHashes);
-  event Withdrawal(address indexed user, address indexed token, uint256 total);
-}
 
 /**
  * @title Vault
@@ -97,10 +89,6 @@ contract Vault is
     $.verifiers = Verifiers(verifiers);
   }
 
-  /**
-   * @dev Returns whether any particular address is the trusted forwarder. Must has identical interface to
-   * ERC2771Context.
-   */
   function isTrustedForwarder(address forwarder) public view virtual returns (bool) {
     return _getStorage().trustedForwarder == forwarder;
   }
@@ -146,49 +134,29 @@ contract Vault is
     return 20;
   }
 
-  /**
-   * @dev Pause all whenNotPaused modified methods
-   */
   function pause() external restricted {
     _pause();
   }
 
-  /**
-   * @dev Unpause all whenNotPaused modified methods
-   */
   function unpause() external restricted {
     _unpause();
   }
 
-  /**
-   * @dev Deposit tokens with commitments and ZK proof validation
-   * @param depositParams The deposit parameters including token, amount, and commitments
-   * @param proof The ZK proof for the deposit
-   */
   function deposit(DepositParams calldata depositParams, uint256[24] calldata proof)
     external
     nonReentrant
     whenNotPaused
   {
     _deposit(depositParams, proof);
-
+    address from = _msgSender();
     IERC20 t = IERC20(depositParams.token);
-    t.safeTransferFrom(_msgSender(), address(this), depositParams.amount);
+    t.safeTransferFrom(from, address(this), depositParams.amount);
     State storage $ = _getStorage();
-    t.safeTransferFrom(_msgSender(), address($.manager), $.manager.getFees(depositParams.token).deposit);
-    t.safeTransferFrom(_msgSender(), depositParams.forwarderFeeRecipient, depositParams.forwarderFee);
-    emit Deposit(_msgSender(), depositParams.token, depositParams.amount);
+    t.safeTransferFrom(from, address($.manager), $.manager.getFees(depositParams.token).deposit);
+    t.safeTransferFrom(from, depositParams.forwarderFeeRecipient, depositParams.forwarderFee);
+    emit Deposit(from, depositParams.token, depositParams.amount);
   }
 
-  /**
-   * @dev Deposit tokens with commitments and ZK proof validation using ERC20 permit
-   * @param depositParams The deposit parameters including token, amount, and commitments
-   * @param proof The ZK proof for the deposit
-   * @param deadline The deadline for the permit
-   * @param v The recovery id of the permit signature
-   * @param r The r component of the permit signature
-   * @param s The s component of the permit signature
-   */
   function depositWithPermit(
     DepositParams calldata depositParams,
     uint256[24] calldata proof,
@@ -201,20 +169,19 @@ contract Vault is
     _deposit(depositParams, proof);
     State storage $ = _getStorage();
     uint256 depositFee = $.manager.getFees(depositParams.token).deposit;
+    address from = _msgSender();
 
-    // Execute the permit to set allowance
     IERC20Permit(depositParams.token).permit(
-      _msgSender(), address(this), depositParams.amount + depositFee + depositParams.forwarderFee, deadline, v, r, s
+      from, address(this), depositParams.amount + depositFee + depositParams.forwarderFee, deadline, v, r, s
     );
 
     IERC20 t = IERC20(depositParams.token);
 
-    // Transfer tokens using the permit allowance
-    t.safeTransferFrom(_msgSender(), address(this), depositParams.amount);
-    t.safeTransferFrom(_msgSender(), address($.manager), depositFee);
-    t.safeTransferFrom(_msgSender(), depositParams.forwarderFeeRecipient, depositParams.forwarderFee);
+    t.safeTransferFrom(from, address(this), depositParams.amount);
+    t.safeTransferFrom(from, address($.manager), depositFee);
+    t.safeTransferFrom(from, depositParams.forwarderFeeRecipient, depositParams.forwarderFee);
 
-    emit Deposit(_msgSender(), depositParams.token, depositParams.amount);
+    emit Deposit(from, depositParams.token, depositParams.amount);
   }
 
   function _deposit(DepositParams calldata depositParams, uint256[24] calldata proof) internal {
@@ -250,13 +217,14 @@ contract Vault is
    * @dev Validate that all input indexes are owned by the sender
    */
   function _validateInputIndexes(Transaction calldata transaction) internal view {
+    address commitmentOwner = _msgSender();
     for (uint256 i = 0; i < transaction.inputsPoseidonHashes.length; i++) {
       uint256 poseidonHash = transaction.inputsPoseidonHashes[i];
       if (poseidonHash == InputsLib.SHARED_INPUT) {
         continue;
       }
       require(
-        _getStorage().commitmentsMap[transaction.token][poseidonHash] == _msgSender(),
+        _getStorage().commitmentsMap[transaction.token][poseidonHash] == commitmentOwner,
         "Vault: Input commitment not found"
       );
     }
@@ -299,11 +267,8 @@ contract Vault is
     }
   }
 
-  /**
-   * @dev Spend commitments by creating new ones (supports multiple inputs and outputs)
-   */
   // solhint-disable-next-line code-complexity
-  function spend(Transaction calldata transaction, uint256[24] calldata proof) external nonReentrant whenNotPaused {
+  function _spend(Transaction calldata transaction, uint256[24] calldata proof) internal {
     require(transaction.token != address(0), "Vault: Invalid token address");
     require(transaction.inputsPoseidonHashes.length > 0, "Vault: No inputs provided");
     require(transaction.outputsPoseidonHashes.length > 0, "Vault: No outputs provided");
@@ -353,15 +318,26 @@ contract Vault is
     }
     t.safeTransfer(address($.manager), spendFee);
 
-    emit TransactionSpent(
-      _msgSender(), transaction.token, transaction.inputsPoseidonHashes, transaction.outputsPoseidonHashes
-    );
+    emit Spend(_msgSender(), transaction.token, transaction.inputsPoseidonHashes, transaction.outputsPoseidonHashes);
+  }
+
+  function spend(Transaction calldata transaction, uint256[24] calldata proof) external nonReentrant whenNotPaused {
+    _spend(transaction, proof);
+  }
+
+  function spendAndCall(address to, Transaction calldata transaction, uint256[24] calldata proof, bytes calldata data)
+    external
+    nonReentrant
+    whenNotPaused
+  {
+    _spend(transaction, proof);
+    ICommitmentsRecipient(to).onCommitmentsReceived(_msgSender(), transaction, data);
   }
 
   /**
    * @dev Removes commitment by providing amount and secret
    */
-  function redeemCommitment(address token, address commitmentOwner, WithdrawItem calldata item) internal {
+  function _redeemCommitment(address token, address commitmentOwner, WithdrawItem calldata item) internal {
     require(token != address(0), "Vault: Invalid token address");
     require(item.amount > 0, "Vault: Amount must be greater than 0");
 
@@ -379,9 +355,6 @@ contract Vault is
     emit CommitmentRemoved(commitmentOwner, token, poseidonHash);
   }
 
-  /**
-   * @dev Withdraw multiple commitments in a single transaction
-   */
   function withdraw(address token, WithdrawItem[] calldata items, WithdrawRecipient[] calldata recipients)
     external
     nonReentrant
@@ -390,7 +363,7 @@ contract Vault is
     uint256 totalProvided = 0;
     address commitmentOwner = _msgSender();
     for (uint256 i = 0; i < items.length; i++) {
-      redeemCommitment(token, commitmentOwner, items[i]);
+      _redeemCommitment(token, commitmentOwner, items[i]);
       totalProvided += items[i].amount;
     }
     uint240 totalRequested = 0;
@@ -405,7 +378,7 @@ contract Vault is
       t.safeTransfer(recipients[i].recipient, recipients[i].amount);
     }
     t.safeTransfer(address($.manager), fee);
-    emit Withdrawal(_msgSender(), token, totalProvided);
+    emit Withdraw(commitmentOwner, token, totalProvided);
   }
 
   /**

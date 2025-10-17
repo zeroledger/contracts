@@ -16,17 +16,17 @@ struct DepositParams {
 }
 
 struct OutputsOwners {
-  address owner; // owner of new UTXO commitment
-  uint8[] indexes; // positions in the outputsPoseidonHashes
+  address owner;
+  uint8[] indexes;
 }
 
 struct Transaction {
   address token;
-  uint256[] inputsPoseidonHashes; // UTXO commitments to consume
-  uint256[] outputsPoseidonHashes; // New UTXO commitments to create
-  bytes[] metadata; // metadata data for each output
-  OutputsOwners[] outputsOwners; // addresses for outputs
-  PublicOutput[] publicOutputs; // public outputs
+  uint256[] inputsPoseidonHashes;
+  uint256[] outputsPoseidonHashes;
+  bytes[] metadata;
+  OutputsOwners[] outputsOwners;
+  PublicOutput[] publicOutputs;
 }
 
 struct WithdrawItem {
@@ -44,7 +44,7 @@ struct PublicOutput {
   uint240 amount;
 }
 
-interface IVault {
+interface IVaultEvents {
   /**
    * @dev Emitted when `user` deposit `amount` `token` into vault
    */
@@ -65,11 +65,93 @@ interface IVault {
   /**
    * @dev Emitted when `owner` withdraw `total` amounts of token from the vault.
    */
-  event Withdrawal(address indexed user, address indexed token, uint256 indexed total);
+  event Withdraw(address indexed user, address indexed token, uint256 indexed total);
+}
+
+interface IVault is IVaultEvents {
+  /**
+   * @dev Returns whether any particular address is the trusted forwarder. Must has identical interface to
+   * ERC2771Context.
+   */
+  function isTrustedForwarder(address forwarder) external view returns (bool);
+
+  /**
+   * @dev Pause all whenNotPaused modified methods
+   */
+  function pause() external;
+
+  /**
+   * @dev Unpause all whenNotPaused modified methods
+   */
+  function unpause() external;
+
+  /**
+   * @dev Deposit tokens with commitments and ZK proof validation
+   * @param depositParams The deposit parameters including token, amount, and commitments
+   * @param proof The ZK proof for the deposit
+   */
+  function deposit(DepositParams calldata depositParams, uint256[24] calldata proof) external;
+
+  /**
+   * @dev Deposit tokens with commitments and ZK proof validation using ERC20 permit
+   * @param depositParams The deposit parameters including token, amount, and commitments
+   * @param proof The ZK proof for the deposit
+   * @param deadline The deadline for the permit
+   * @param v The recovery id of the permit signature
+   * @param r The r component of the permit signature
+   * @param s The s component of the permit signature
+   */
+  function depositWithPermit(
+    DepositParams calldata depositParams,
+    uint256[24] calldata proof,
+    uint256 deadline,
+    uint8 v,
+    bytes32 r,
+    bytes32 s
+  ) external;
+
+  /**
+   * @dev Spend commitments by creating new ones (supports multiple inputs and outputs)
+   */
+  function spend(Transaction calldata transaction, uint256[24] calldata proof) external;
+
+  /**
+   * @dev Spend commitments by creating new ones (supports multiple inputs and outputs)
+   */
+  function spendAndCall(address to, Transaction calldata transaction, uint256[24] calldata proof, bytes calldata data)
+    external;
+
+  /**
+   * @dev Withdraw multiple commitments in a single transaction
+   */
+  function withdraw(address token, WithdrawItem[] calldata items, WithdrawRecipient[] calldata recipients) external;
+
+  /**
+   * @dev Compute Poseidon hash of amount and sValue on-chain
+   */
+  function computePoseidonHash(uint256 amount, uint256 sValue) external pure returns (uint256);
+
+  /**
+   * @dev Get commitment details for a given token and poseidon hash
+   */
+  function getCommitment(address token, uint256 poseidonHash) external view returns (address owner);
+
+  /**
+   * @dev Returns address of current Trusted Forwarder contract
+   */
+  function getTrustedForwarder() external view returns (address);
+
+  /**
+   * @dev Returns address of current ProtocolManager contract
+   */
+  function getManager() external view returns (address);
+
+  /**
+   * @dev Returns address of Verifiers umbrella contract
+   */
+  function getVerifiers() external view returns (address);
 }
 
 interface ICommitmentsRecipient {
-  function onCommitmentsReceived(address from, uint256[] calldata commitments, bytes calldata data)
-    external
-    returns (bytes4);
+  function onCommitmentsReceived(address from, Transaction calldata transaction, bytes calldata data) external;
 }

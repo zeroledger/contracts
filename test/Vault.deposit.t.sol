@@ -4,7 +4,7 @@ pragma solidity >=0.8.21;
 import {VaultTest} from "./VaultTest.util.sol";
 import {DepositParams, DepositCommitmentParams} from "src/Vault.types.sol";
 import {Fees} from "src/ProtocolManager.sol";
-import {IVaultEvents} from "src/Vault.sol";
+import {IVaultEvents} from "src/Vault.types.sol";
 import {PermitUtils} from "./Permit.util.sol";
 
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
@@ -78,7 +78,7 @@ contract VaultDepositTest is VaultTest, IVaultEvents {
     DepositCommitmentParams[3] memory commitmentParams;
     commitmentParams[0] = DepositCommitmentParams({poseidonHash: 123456789, owner: alice, metadata: "metadata1"});
     commitmentParams[1] = DepositCommitmentParams({
-      poseidonHash: 16345784317541686154474118656352090725662212393131703302641232392927716723243,
+      poseidonHash: 15137436504035450233189320721078414488136960400594787218856438198681086299747,
       owner: bob,
       metadata: "metadata2"
     }); // Shared input
@@ -102,7 +102,7 @@ contract VaultDepositTest is VaultTest, IVaultEvents {
     // Verify only non-shared commitments were created
     address owner1 = vault.getCommitment(address(mockToken), 123456789);
     address owner2 = vault.getCommitment(
-      address(mockToken), 16345784317541686154474118656352090725662212393131703302641232392927716723243
+      address(mockToken), 15137436504035450233189320721078414488136960400594787218856438198681086299747
     );
     address owner3 = vault.getCommitment(address(mockToken), 555666777);
 
@@ -484,7 +484,7 @@ contract VaultDepositTest is VaultTest, IVaultEvents {
     emit CommitmentCreated(charlie, address(mockToken), 555666777, "metadata3");
 
     vm.expectEmit(true, true, false, true);
-    emit TokenDeposited(alice, address(mockToken), defaultDepositAmount);
+    emit Deposit(alice, address(mockToken), defaultDepositAmount);
 
     vault.deposit(depositParams, proof);
     vm.stopPrank();
@@ -634,7 +634,7 @@ contract VaultDepositTest is VaultTest, IVaultEvents {
     emit CommitmentCreated(charlie, address(mockToken), 555666777, "metadata3");
 
     vm.expectEmit(true, true, false, true);
-    emit TokenDeposited(alice, address(mockToken), defaultDepositAmount);
+    emit Deposit(alice, address(mockToken), defaultDepositAmount);
 
     vm.startPrank(alice);
     vault.depositWithPermit(depositParams, proof, block.timestamp + 1000, signature.v, signature.r, signature.s);

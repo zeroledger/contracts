@@ -59,9 +59,9 @@ interface IVaultEvents {
    */
   event CommitmentRemoved(address indexed owner, address indexed token, uint256 poseidonHash);
   /**
-   * @dev Emitted when `token` scoped `poseidonHashes` commitments transferred from `from` address to `to` address
+   * @dev Emitted when `token` scoped `poseidonHash` commitment transferred from `from` address to `to` address
    */
-  event CommitmentsTransfer(address indexed from, address indexed to, address indexed token, uint256[] poseidonHashes);
+  event CommitmentTransfer(address indexed from, address indexed to, address indexed token, uint256 poseidonHash);
   /**
    * @dev Emitted when `owner` spend a confidential amount of some `token`.
    */
@@ -132,7 +132,7 @@ interface IVault is IVaultEvents {
    * CommitmentsTransfer does not carry metadata, so client will need to find a CommitmentCreated event for the
    * corresponding commitment to get the commitment metadata.
    */
-  function transfer(address to, address token, uint256[] calldata poseidonHashes) external;
+  function transfer(address to, address token, uint256 poseidonHash) external;
 
   /**
    * @dev Withdraw multiple commitments in a single transaction

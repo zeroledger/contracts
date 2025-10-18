@@ -189,7 +189,6 @@ contract Vault is
     address token = depositParams.token;
     uint256 amount = depositParams.amount;
     DepositCommitmentParams[3] calldata depositCommitmentParams = depositParams.depositCommitmentParams;
-    require(token != address(0), "Vault: Invalid token address");
     require(amount > 0, "Vault: Amount must be greater than 0");
     uint240 maxTVL = $.manager.getMaxTVL(token);
     require(IERC20(token).balanceOf(address(this)) + amount <= maxTVL, "Vault: Amount exceeds max TVL");
@@ -199,7 +198,6 @@ contract Vault is
     );
 
     // Check that no commitment has been used before and
-    // assign commitments to addresses before external call
     for (uint256 i = 0; i < depositCommitmentParams.length; i++) {
       uint256 poseidonHash = depositCommitmentParams[i].poseidonHash;
       if (poseidonHash == InputsLib.SHARED_INPUT) {
@@ -269,7 +267,6 @@ contract Vault is
 
   // solhint-disable-next-line code-complexity
   function _spend(Transaction calldata transaction, uint256[24] calldata proof) internal {
-    require(transaction.token != address(0), "Vault: Invalid token address");
     require(transaction.inputsPoseidonHashes.length > 0, "Vault: No inputs provided");
     require(transaction.outputsPoseidonHashes.length > 0, "Vault: No outputs provided");
 
@@ -334,31 +331,19 @@ contract Vault is
     ICommitmentsRecipient(to).onCommitmentsReceived(_msgSender(), transaction, data);
   }
 
-  function transfer(address to, address token, uint256[] calldata poseidonHashes) external {
-    require(token != address(0), "Vault: Invalid token address");
-    State storage $ = _getStorage();
+  function transfer(address to, address token, uint256 poseidonHash) external {
     address commitmentOwner = _msgSender();
-
-    for (uint256 i = 0; i < poseidonHashes.length; i++) {
-      uint256 poseidonHash = poseidonHashes[i];
-      require($.commitmentsMap[token][poseidonHash] == commitmentOwner, "Vault: Only assigned address can withdraw");
-      $.commitmentsMap[token][poseidonHash] = to;
-    }
-    emit CommitmentsTransfer(commitmentOwner, to, token, poseidonHashes);
+    State storage $ = _getStorage();
+    require($.commitmentsMap[token][poseidonHash] == commitmentOwner, "Vault: Only assigned address can withdraw");
+    $.commitmentsMap[token][poseidonHash] = to;
+    emit CommitmentTransfer(commitmentOwner, to, token, poseidonHash);
   }
 
   /**
    * @dev Removes commitment by providing amount and secret
    */
   function _redeemCommitment(address token, address commitmentOwner, WithdrawItem calldata item) internal {
-    require(token != address(0), "Vault: Invalid token address");
-    require(item.amount > 0, "Vault: Amount must be greater than 0");
-
     uint256 poseidonHash = computePoseidonHash(item.amount, item.sValue);
-    if (poseidonHash == InputsLib.SHARED_INPUT) {
-      return;
-    }
-
     State storage $ = _getStorage();
 
     require($.commitmentsMap[token][poseidonHash] == commitmentOwner, "Vault: Only assigned address can withdraw");
@@ -394,16 +379,10 @@ contract Vault is
     emit Withdraw(commitmentOwner, token, totalProvided);
   }
 
-  /**
-   * @dev Compute Poseidon hash of amount and sValue on-chain
-   */
   function computePoseidonHash(uint256 amount, uint256 sValue) public pure returns (uint256) {
     return PoseidonT3.hash([amount, sValue]);
   }
 
-  /**
-   * @dev Get commitment details for a given token and poseidon hash
-   */
   function getCommitment(address token, uint256 poseidonHash) external view returns (address owner) {
     return _getStorage().commitmentsMap[token][poseidonHash];
   }

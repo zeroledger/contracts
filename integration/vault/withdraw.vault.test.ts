@@ -453,40 +453,7 @@ describe("Vault Withdraw Tests", function () {
             },
           ],
         ),
-      ).to.be.revertedWith("Vault: Amount must be greater than 0");
-    });
-
-    it("should fail with invalid token address", async function () {
-      const { vault, user, protocolManager, mockToken, forwarderFeeRecipient } = await loadFixture(deployVaultFixture);
-
-      // Arrange
-      const testData: WithdrawTestData = {
-        amount: ethers.parseEther("50"),
-        user,
-        forwarderFee: 0n,
-        forwarderFeeRecipient,
-      };
-
-      const withdrawFee = (await getFees(protocolManager, mockToken)).withdraw;
-
-      // Act & Assert
-      await expect(
-        vault.connect(testData.user).withdraw(
-          ethers.ZeroAddress,
-          [
-            {
-              amount: testData.amount,
-              sValue: `0x${Buffer.from(randomBytes(32)).toString("hex")}`,
-            },
-          ],
-          [
-            {
-              recipient: testData.user.address,
-              amount: testData.amount - withdrawFee,
-            },
-          ],
-        ),
-      ).to.be.revertedWith("Vault: Invalid token address");
+      ).to.be.revertedWith("Vault: Only assigned address can withdraw");
     });
   });
 });

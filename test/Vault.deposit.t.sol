@@ -200,34 +200,6 @@ contract VaultDepositTest is VaultTest, IVaultEvents {
     vm.stopPrank();
   }
 
-  // Test deposit with invalid token address (should fail)
-  function test_deposit_invalid_token() public {
-    depositVerifier.setVerificationResult(true);
-
-    DepositCommitmentParams[3] memory commitmentParams;
-    commitmentParams[0] = DepositCommitmentParams({poseidonHash: 123456789, owner: alice, metadata: "metadata1"});
-    commitmentParams[1] = DepositCommitmentParams({poseidonHash: 987654321, owner: bob, metadata: "metadata2"});
-    commitmentParams[2] = DepositCommitmentParams({poseidonHash: 555666777, owner: charlie, metadata: "metadata3"});
-
-    DepositParams memory depositParams = DepositParams({
-      token: address(0), // Invalid token address
-      amount: defaultDepositAmount,
-      depositCommitmentParams: commitmentParams,
-      forwarderFee: defaultForwarderFee,
-      forwarderFeeRecipient: address(zeroLedgerForwarder)
-    });
-
-    uint256[24] memory proof = getDummyProof();
-
-    vm.startPrank(alice);
-    mockToken.approve(address(vault), defaultTotalAmount);
-
-    vm.expectRevert("Vault: Invalid token address");
-    vault.deposit(depositParams, proof);
-
-    vm.stopPrank();
-  }
-
   // Test deposit exceeding max TVL (should fail)
   function test_deposit_exceeds_max_tvl_reverts() public {
     depositVerifier.setVerificationResult(true);

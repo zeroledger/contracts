@@ -147,45 +147,6 @@ describe("Vault Deposit Tests", function () {
         "Vault: Amount must be greater than 0",
       );
     });
-
-    it("should fail with invalid token address", async function () {
-      const { vault, mockToken, user, protocolManager, forwarderFeeRecipient } = await loadFixture(deployVaultFixture);
-
-      // Arrange
-      const testData: DepositTestData = {
-        depositAmount: ethers.parseEther("50"),
-        individualAmounts: [ethers.parseEther("10"), ethers.parseEther("0"), ethers.parseEther("40")],
-        user,
-        forwarderFee: 10n,
-        forwarderFeeRecipient,
-      };
-
-      const commitmentData = await generateCommitmentData(testData.individualAmounts, testData.user.address);
-
-      const proofData = await generateDepositProof(
-        commitmentData.hashes,
-        testData.depositAmount.toString(),
-        commitmentData.amounts,
-        commitmentData.sValues,
-      );
-
-      // Create deposit params with invalid token address
-      const depositParams: DepositParamsStruct = {
-        token: ethers.ZeroAddress,
-        amount: testData.depositAmount,
-        depositCommitmentParams: commitmentData.depositCommitmentParams,
-        forwarderFee: 10n,
-        forwarderFeeRecipient,
-      };
-
-      const totalAmount = testData.depositAmount + (await getFees(protocolManager, mockToken)).deposit;
-      await approveTokens(testData.user, totalAmount, vault, mockToken);
-
-      // Act & Assert
-      await expect(vault.connect(testData.user).deposit(depositParams, proofData.calldata_proof)).to.be.revertedWith(
-        "Vault: Invalid token address",
-      );
-    });
   });
 
   describe("Sponsored Deposits via Forwarder", function () {

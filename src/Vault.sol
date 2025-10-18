@@ -334,6 +334,19 @@ contract Vault is
     ICommitmentsRecipient(to).onCommitmentsReceived(_msgSender(), transaction, data);
   }
 
+  function transfer(address to, address token, uint256[] calldata poseidonHashes) external {
+    require(token != address(0), "Vault: Invalid token address");
+    State storage $ = _getStorage();
+    address commitmentOwner = _msgSender();
+
+    for (uint256 i = 0; i < poseidonHashes.length; i++) {
+      uint256 poseidonHash = poseidonHashes[i];
+      require($.commitmentsMap[token][poseidonHash] == commitmentOwner, "Vault: Only assigned address can withdraw");
+      $.commitmentsMap[token][poseidonHash] = to;
+    }
+    emit CommitmentsTransfer(commitmentOwner, to, token, poseidonHashes);
+  }
+
   /**
    * @dev Removes commitment by providing amount and secret
    */

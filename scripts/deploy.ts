@@ -1,6 +1,14 @@
 import hre from "hardhat";
 import ProxyModule from "../ignition/modules/Proxy.module";
 import { getBytes, id, concat } from "ethers";
+import { NetworkConfig } from "hardhat/types";
+
+type Params = {
+  admin: string;
+  maintainer: string;
+  treasureManager: string;
+  securityCouncil: string;
+};
 
 const trueOrThrow = (condition: boolean, message: string) => {
   if (!condition) {
@@ -11,7 +19,7 @@ const trueOrThrow = (condition: boolean, message: string) => {
 function mkCreateXSalt(deployer: string) {
   const addr20 = getBytes(deployer); // 20 bytes
   const flag1 = getBytes("0x01"); // 1 byte
-  const rnd11 = getBytes(id("zeroledger.salt"));
+  const rnd11 = getBytes(id(process.env.CREATE2_SALT ?? "zeroeldger"));
   const salt = concat([addr20, flag1, rnd11]).slice(0, 66); // 32 bytes hex
   return salt;
 }
@@ -19,21 +27,20 @@ function mkCreateXSalt(deployer: string) {
 async function main() {
   const [deployer] = await hre.ethers.getSigners();
 
-  const params = (
-    hre.network.config as unknown as {
-      params?: {
-        admin: string;
-        maintainer: string;
-        treasureManager: string;
-        securityCouncil: string;
-      };
-    }
-  ).params;
+  const params = {
+    admin: deployer.address,
+    maintainer: deployer.address,
+    treasureManager: deployer.address,
+    securityCouncil: deployer.address,
+    ...(
+      hre.network.config as NetworkConfig & {
+        params?: Params;
+      }
+    ).params,
+  };
 
-  const admin = params?.admin ?? deployer.address;
-  const maintainer = params?.maintainer ?? deployer.address;
-  const treasureManager = params?.treasureManager ?? deployer.address;
-  const securityCouncil = params?.securityCouncil ?? deployer.address;
+  const { admin, maintainer, treasureManager, securityCouncil } = params;
+
   const salt = mkCreateXSalt(deployer.address);
 
   console.log(`Deploying with params:

@@ -5,12 +5,12 @@ import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManage
 import {RolesLib} from "src/Roles.lib.sol";
 
 /**
- * @dev Contract to admin roles for Forwarder, Vault, ProtocolManager contract administration
+ * @dev Contract to admin roles for the Forwarder, Vault, ProtocolManager contract administration
  * Roles Description:
  * ADMIN - multisig 3/5 wallet, grand / suspend roles, freeze / unfreeze roles
  * TREASURE_MANAGER - multisig 2/3 wallet to manage protocol tokenomics
  * SECURITY_COUNCIL - multisig 2/3 wallet to pause/unpause vault operations
- * MAINTAINER - multisig 2/3 wallet to approve dependant contract upgrades
+ * MAINTAINER - multisig 2/3 wallet to approve dependent contract upgrades
  */
 contract Administrator is AccessManager {
   constructor(

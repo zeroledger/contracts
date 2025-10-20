@@ -33,13 +33,6 @@ The ZeroLedger system consists of three main contracts designed for modularity a
 
 - **Administrator**: Manages protocol contracts administrative functions like upgrades or emergency pausing
 
-Deployed on Base Sepolia testnet:
-
-- **Vault**: `0xa4c6FC97514a3cC010FC555C02711d8B1Ff24291`
-- **ProtocolManager**: `0x5a81F35020C2b124d3631c39532E7F7813746c32`
-- **Forwarder**: `0xE8653c7044eFB585FE39185941590251c3Db4591`
-- **Administrator**: `0x059Be04D39201b2fF0aabC37C6fb421C05bFc7C1`
-
 ### Management & Security
 
 **Multisig Governance**: All administrative functions, including fee updates, contract upgrades, and security measures, are managed through multisig wallets. This ensures that no single entity can make critical changes to the protocol.

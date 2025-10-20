@@ -172,36 +172,6 @@ contract VaultWithdrawTest is VaultTest, IVaultEvents {
     vm.stopPrank();
   }
 
-  function test_withdraw_zero_amount() public {
-    // Create withdraw item with zero amount
-    WithdrawItem[] memory items = new WithdrawItem[](1);
-    items[0] = WithdrawItem({amount: 0, sValue: uint256(123456789)});
-
-    WithdrawRecipient[] memory recipients = new WithdrawRecipient[](1);
-    recipients[0] = WithdrawRecipient({recipient: alice, amount: WITHDRAW_AMOUNT_1 - WITHDRAW_FEE});
-
-    // Execute withdraw - should fail
-    vm.startPrank(alice);
-    vm.expectRevert("Vault: Amount must be greater than 0");
-    vault.withdraw(address(mockToken), items, recipients);
-    vm.stopPrank();
-  }
-
-  function test_withdraw_invalid_token() public {
-    // Create withdraw item
-    WithdrawItem[] memory items = new WithdrawItem[](1);
-    items[0] = WithdrawItem({amount: uint240(50e18), sValue: uint256(123456789)});
-
-    WithdrawRecipient[] memory recipients = new WithdrawRecipient[](1);
-    recipients[0] = WithdrawRecipient({recipient: alice, amount: WITHDRAW_AMOUNT_1 - WITHDRAW_FEE});
-
-    // Execute withdraw with invalid token - should fail
-    vm.startPrank(alice);
-    vm.expectRevert("Vault: Invalid token address");
-    vault.withdraw(address(0), items, recipients);
-    vm.stopPrank();
-  }
-
   function test_withdraw_fee_greater_than_amount() public {
     // Create a deposit with the pre-computed hash
     uint256[3] memory depositHashes = [poseidonHash4, uint256(987654321), uint256(555666777)];

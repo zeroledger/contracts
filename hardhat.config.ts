@@ -73,5 +73,16 @@ export default {
   },
   etherscan: {
     apiKey: config?.parsed?.ETHERSCAN_API_KEY,
+
+    customChains: [
+      {
+        network: "baseSepolia", // <-- must match networks key you use with --network
+        chainId: 84532,
+        urls: {
+          apiURL: "https://api-sepolia.basescan.org/api", // Basescan verification API
+          browserURL: "https://sepolia.basescan.org", // explorer UI
+        },
+      },
+    ],
   },
 };

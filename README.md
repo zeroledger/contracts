@@ -131,8 +131,8 @@ contracts/
 │   ├── MockERC20.sol         # Test token
 │   └── Proxy.sol/            # ERC1967Proxy import
 ├── ignition/                 # Zero-knowledge circuits
-│   ├── modules/              # Circom circuit definitions
-│   └── deployments/          # Circuit utilities
+│   ├── modules/              # hardhat ignition deployment modules
+│   └── deployments/          # deployments artifacts
 ├── test/                     # Foundry unit tests
 ├── integration/              # Hardhat integration tests
 ├── circuits/                 # Zero-knowledge circuits (git module)

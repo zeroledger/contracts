@@ -20,6 +20,7 @@ import {Verifiers} from "src/Verifiers.sol";
 import {PoseidonT3} from "@poseidon-solidity/PoseidonT3.sol";
 import {
   IVault,
+  IVaultErrors,
   DepositCommitmentParams,
   DepositParams,
   OutputsOwners,
@@ -41,7 +42,8 @@ contract Vault is
   AccessManagedUpgradeable,
   ReentrancyGuardUpgradeable,
   PausableUpgradeable,
-  IVault
+  IVault,
+  IVaultErrors
 {
   using SafeERC20 for IERC20;
 
@@ -78,7 +80,7 @@ contract Vault is
     __vault_init_unchained(verifiers, trustedForwarder, protocolManager);
   }
 
-  function upgradeCallBack() external reinitializer(0) {}
+  function upgradeCallBack() external reinitializer(1) {}
 
   function _authorizeUpgrade(address newImplementation) internal override restricted {}
 
@@ -152,8 +154,13 @@ contract Vault is
     IERC20 t = IERC20(depositParams.token);
     t.safeTransferFrom(from, address(this), depositParams.amount);
     State storage $ = _getStorage();
-    t.safeTransferFrom(from, address($.manager), $.manager.getFees(depositParams.token).deposit);
-    t.safeTransferFrom(from, depositParams.forwarderFeeRecipient, depositParams.forwarderFee);
+    uint240 depositFee = $.manager.getFees(depositParams.token).deposit;
+    if (depositFee > 0) {
+      t.safeTransferFrom(from, address($.manager), depositFee);
+    }
+    if (depositParams.forwarderFee > 0) {
+      t.safeTransferFrom(from, depositParams.forwarderFeeRecipient, depositParams.forwarderFee);
+    }
     emit Deposit(from, depositParams.token, depositParams.amount);
   }
 
@@ -165,7 +172,7 @@ contract Vault is
     bytes32 r,
     bytes32 s
   ) external nonReentrant whenNotPaused {
-    require(deadline >= block.timestamp, "Vault: Permit expired");
+    if (deadline < block.timestamp) revert PermitExpired();
     _deposit(depositParams, proof);
     State storage $ = _getStorage();
     uint256 depositFee = $.manager.getFees(depositParams.token).deposit;
@@ -178,8 +185,12 @@ contract Vault is
     IERC20 t = IERC20(depositParams.token);
 
     t.safeTransferFrom(from, address(this), depositParams.amount);
-    t.safeTransferFrom(from, address($.manager), depositFee);
-    t.safeTransferFrom(from, depositParams.forwarderFeeRecipient, depositParams.forwarderFee);
+    if (depositFee > 0) {
+      t.safeTransferFrom(from, address($.manager), depositFee);
+    }
+    if (depositParams.forwarderFee > 0) {
+      t.safeTransferFrom(from, depositParams.forwarderFeeRecipient, depositParams.forwarderFee);
+    }
 
     emit Deposit(from, depositParams.token, depositParams.amount);
   }
@@ -189,13 +200,13 @@ contract Vault is
     address token = depositParams.token;
     uint256 amount = depositParams.amount;
     DepositCommitmentParams[3] calldata depositCommitmentParams = depositParams.depositCommitmentParams;
-    require(amount > 0, "Vault: Amount must be greater than 0");
+    if (amount == 0) revert AmountMustBeGreaterThanZero();
     uint240 maxTVL = $.manager.getMaxTVL(token);
-    require(IERC20(token).balanceOf(address(this)) + amount <= maxTVL, "Vault: Amount exceeds max TVL");
-    require(
-      $.verifiers.depositVerifier().verify(proof, InputsLib.depositInputs(depositCommitmentParams, amount)),
-      "Vault: Invalid ZK proof"
-    );
+    uint256 currentBalance = IERC20(token).balanceOf(address(this));
+    if (currentBalance + amount > maxTVL) revert AmountExceedsMaxTVL(currentBalance, amount, maxTVL);
+    if (!$.verifiers.depositVerifier().verify(proof, InputsLib.depositInputs(depositCommitmentParams, amount))) {
+      revert InvalidZKProof();
+    }
 
     // Check that no commitment has been used before and
     for (uint256 i = 0; i < depositCommitmentParams.length; i++) {
@@ -203,7 +214,7 @@ contract Vault is
       if (poseidonHash == InputsLib.SHARED_INPUT) {
         continue;
       }
-      require($.commitmentsMap[token][poseidonHash] == address(0), "Vault: Commitment already used");
+      if ($.commitmentsMap[token][poseidonHash] != address(0)) revert CommitmentAlreadyUsed(poseidonHash);
       $.commitmentsMap[token][poseidonHash] = depositCommitmentParams[i].owner;
       emit CommitmentCreated(
         depositCommitmentParams[i].owner, token, poseidonHash, depositCommitmentParams[i].metadata
@@ -216,15 +227,15 @@ contract Vault is
    */
   function _validateInputIndexes(Transaction calldata transaction) internal view {
     address commitmentOwner = _msgSender();
+    State storage $ = _getStorage();
     for (uint256 i = 0; i < transaction.inputsPoseidonHashes.length; i++) {
       uint256 poseidonHash = transaction.inputsPoseidonHashes[i];
       if (poseidonHash == InputsLib.SHARED_INPUT) {
         continue;
       }
-      require(
-        _getStorage().commitmentsMap[transaction.token][poseidonHash] == commitmentOwner,
-        "Vault: Input commitment not found"
-      );
+      if ($.commitmentsMap[transaction.token][poseidonHash] != commitmentOwner) {
+        revert InputCommitmentNotFound(poseidonHash);
+      }
     }
   }
 
@@ -267,8 +278,8 @@ contract Vault is
 
   // solhint-disable-next-line code-complexity
   function _spend(Transaction calldata transaction, uint256[24] calldata proof) internal {
-    require(transaction.inputsPoseidonHashes.length > 0, "Vault: No inputs provided");
-    require(transaction.outputsPoseidonHashes.length > 0, "Vault: No outputs provided");
+    if (transaction.inputsPoseidonHashes.length == 0) revert NoInputsProvided();
+    if (transaction.outputsPoseidonHashes.length == 0) revert NoOutputsProvided();
 
     _validateInputIndexes(transaction);
 
@@ -300,7 +311,7 @@ contract Vault is
       isValidProof = $.verifiers.spend161Verifier().verify(proof, InputsLib.fillSpend18Inputs(transaction, spendFee));
     }
 
-    require(isValidProof, "Vault: Invalid ZK proof");
+    if (!isValidProof) revert InvalidZKProof();
 
     _deleteInputCommitments(transaction);
 
@@ -313,7 +324,9 @@ contract Vault is
         t.safeTransfer(transaction.publicOutputs[i].owner, transaction.publicOutputs[i].amount);
       }
     }
-    t.safeTransfer(address($.manager), spendFee);
+    if (spendFee > 0) {
+      t.safeTransfer(address($.manager), spendFee);
+    }
 
     emit Spend(_msgSender(), transaction.token, transaction.inputsPoseidonHashes, transaction.outputsPoseidonHashes);
   }
@@ -334,7 +347,9 @@ contract Vault is
   function transfer(address to, address token, uint256 poseidonHash) external {
     address commitmentOwner = _msgSender();
     State storage $ = _getStorage();
-    require($.commitmentsMap[token][poseidonHash] == commitmentOwner, "Vault: Only assigned address can withdraw");
+    if ($.commitmentsMap[token][poseidonHash] != commitmentOwner) {
+      revert OnlyAssignedAddressCanWithdraw(token, poseidonHash, commitmentOwner);
+    }
     $.commitmentsMap[token][poseidonHash] = to;
     emit CommitmentTransfer(commitmentOwner, to, token, poseidonHash);
   }
@@ -346,7 +361,9 @@ contract Vault is
     uint256 poseidonHash = computePoseidonHash(item.amount, item.sValue);
     State storage $ = _getStorage();
 
-    require($.commitmentsMap[token][poseidonHash] == commitmentOwner, "Vault: Only assigned address can withdraw");
+    if ($.commitmentsMap[token][poseidonHash] != commitmentOwner) {
+      revert OnlyAssignedAddressCanWithdraw(token, poseidonHash, commitmentOwner);
+    }
 
     delete $.commitmentsMap[token][poseidonHash];
 
@@ -370,12 +387,16 @@ contract Vault is
     }
     State storage $ = _getStorage();
     uint240 fee = $.manager.getFees(token).withdraw;
-    require(totalProvided == totalRequested + fee, "Vault: Unequal total provided and requested amounts");
+    if (totalProvided != totalRequested + fee) {
+      revert UnequalTotalAmounts(totalProvided, totalRequested, fee);
+    }
     IERC20 t = IERC20(token);
     for (uint256 i = 0; i < recipients.length; i++) {
       t.safeTransfer(recipients[i].recipient, recipients[i].amount);
     }
-    t.safeTransfer(address($.manager), fee);
+    if (fee > 0) {
+      t.safeTransfer(address($.manager), fee);
+    }
     emit Withdraw(commitmentOwner, token, totalProvided);
   }
 

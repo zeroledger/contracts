@@ -2,7 +2,7 @@
 pragma solidity >=0.8.21;
 
 import {VaultTest} from "./VaultTest.util.sol";
-import {Transaction, OutputsOwners, PublicOutput} from "src/Vault.types.sol";
+import {Transaction, OutputsOwners, PublicOutput, IVaultErrors} from "src/Vault.types.sol";
 import {IVaultEvents} from "src/Vault.types.sol";
 import {Fees} from "src/ProtocolManager.sol";
 

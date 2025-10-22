@@ -256,7 +256,7 @@ describe("Vault Withdraw Tests", function () {
             },
           ],
         ),
-      ).to.be.revertedWith("Vault: Only assigned address can withdraw");
+      ).to.be.revertedWithCustomError(vault, "OnlyAssignedAddressCanWithdraw");
     });
 
     it("should fail when withdrawing with wrong amount", async function () {
@@ -294,7 +294,7 @@ describe("Vault Withdraw Tests", function () {
             },
           ],
         ),
-      ).to.be.revertedWith("Vault: Only assigned address can withdraw");
+      ).to.be.revertedWithCustomError(vault, "OnlyAssignedAddressCanWithdraw");
     });
 
     it("should fail when withdrawing with wrong sValue", async function () {
@@ -319,7 +319,7 @@ describe("Vault Withdraw Tests", function () {
             },
           ],
         ),
-      ).to.be.revertedWith("Vault: Only assigned address can withdraw");
+      ).to.be.revertedWithCustomError(vault, "OnlyAssignedAddressCanWithdraw");
     });
 
     it("should fail when withdrawing commitment owned by different user", async function () {
@@ -364,7 +364,7 @@ describe("Vault Withdraw Tests", function () {
             },
           ],
         ),
-      ).to.be.revertedWith("Vault: Only assigned address can withdraw");
+      ).to.be.revertedWithCustomError(vault, "OnlyAssignedAddressCanWithdraw");
     });
 
     it("should fail when withdrawing already withdrawn commitment", async function () {
@@ -422,7 +422,7 @@ describe("Vault Withdraw Tests", function () {
             },
           ],
         ),
-      ).to.be.revertedWith("Vault: Only assigned address can withdraw");
+      ).to.be.revertedWithCustomError(vault, "OnlyAssignedAddressCanWithdraw");
     });
 
     it("should fail with zero amount", async function () {
@@ -453,7 +453,7 @@ describe("Vault Withdraw Tests", function () {
             },
           ],
         ),
-      ).to.be.revertedWith("Vault: Only assigned address can withdraw");
+      ).to.be.revertedWithCustomError(vault, "OnlyAssignedAddressCanWithdraw");
     });
   });
 });

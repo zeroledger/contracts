@@ -2,7 +2,7 @@
 pragma solidity >=0.8.21;
 
 import {VaultTest} from "./VaultTest.util.sol";
-import {DepositParams, DepositCommitmentParams} from "src/Vault.types.sol";
+import {DepositParams, DepositCommitmentParams, IVaultErrors} from "src/Vault.types.sol";
 import {Fees} from "src/ProtocolManager.sol";
 import {IVaultEvents} from "src/Vault.types.sol";
 import {PermitUtils} from "./Permit.util.sol";
@@ -194,7 +194,7 @@ contract VaultDepositTest is VaultTest, IVaultEvents {
     vm.startPrank(alice);
     mockToken.approve(address(vault), defaultTotalAmount);
 
-    vm.expectRevert("Vault: Amount must be greater than 0");
+    vm.expectRevert(abi.encodeWithSelector(AmountMustBeGreaterThanZero.selector));
     vault.deposit(depositParams, proof);
 
     vm.stopPrank();
@@ -225,7 +225,9 @@ contract VaultDepositTest is VaultTest, IVaultEvents {
     vm.startPrank(alice);
     mockToken.approve(address(vault), defaultTotalAmount);
 
-    vm.expectRevert("Vault: Amount exceeds max TVL");
+    vm.expectRevert(
+      abi.encodeWithSelector(AmountExceedsMaxTVL.selector, 0, defaultDepositAmount, defaultDepositAmount - 1)
+    );
     vault.deposit(depositParams, proof);
 
     vm.stopPrank();
@@ -286,7 +288,7 @@ contract VaultDepositTest is VaultTest, IVaultEvents {
     vm.startPrank(alice);
     mockToken.approve(address(vault), defaultTotalAmount);
 
-    vm.expectRevert("Vault: Invalid ZK proof");
+    vm.expectRevert(abi.encodeWithSelector(InvalidZKProof.selector));
     vault.deposit(depositParams, proof);
 
     vm.stopPrank();
@@ -318,7 +320,7 @@ contract VaultDepositTest is VaultTest, IVaultEvents {
     vault.deposit(depositParams, proof);
 
     // Second deposit with same commitments should fail
-    vm.expectRevert("Vault: Commitment already used");
+    vm.expectRevert(abi.encodeWithSelector(CommitmentAlreadyUsed.selector, 123456789));
     vault.deposit(depositParams, proof);
 
     vm.stopPrank();
@@ -528,7 +530,7 @@ contract VaultDepositTest is VaultTest, IVaultEvents {
     PermitUtils.Signature memory signature =
       doPermit(alice, address(vault), uint256(defaultTotalAmount), 0, block.timestamp - 1);
 
-    vm.expectRevert("Vault: Permit expired");
+    vm.expectRevert(abi.encodeWithSelector(PermitExpired.selector));
     vault.depositWithPermit(
       depositParams,
       proof,

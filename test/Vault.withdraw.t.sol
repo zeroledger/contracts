@@ -2,7 +2,7 @@
 pragma solidity >=0.8.21;
 
 import {VaultTest} from "./VaultTest.util.sol";
-import {WithdrawItem, WithdrawRecipient} from "src/Vault.types.sol";
+import {WithdrawItem, WithdrawRecipient, IVaultErrors} from "src/Vault.types.sol";
 import {IVaultEvents} from "src/Vault.types.sol";
 import {Fees} from "src/ProtocolManager.sol";
 
@@ -146,7 +146,9 @@ contract VaultWithdrawTest is VaultTest, IVaultEvents {
 
     // Execute withdraw - should fail
     vm.startPrank(alice);
-    vm.expectRevert("Vault: Only assigned address can withdraw");
+    vm.expectRevert(
+      abi.encodeWithSelector(OnlyAssignedAddressCanWithdraw.selector, address(mockToken), poseidonHash1, alice)
+    );
     vault.withdraw(address(mockToken), items, recipients);
     vm.stopPrank();
   }
@@ -167,7 +169,9 @@ contract VaultWithdrawTest is VaultTest, IVaultEvents {
 
     // Execute withdraw as Bob - should fail
     vm.startPrank(bob);
-    vm.expectRevert("Vault: Only assigned address can withdraw");
+    vm.expectRevert(
+      abi.encodeWithSelector(OnlyAssignedAddressCanWithdraw.selector, address(mockToken), poseidonHash1, bob)
+    );
     vault.withdraw(address(mockToken), items, recipients);
     vm.stopPrank();
   }

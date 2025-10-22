@@ -14,11 +14,11 @@ import {Administrator} from "src/Administrator.sol";
 import {MockERC20} from "src/helpers/MockERC20.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {MockVerifier} from "./mocks/MockVerifier.sol";
-import {DepositParams, DepositCommitmentParams} from "src/Vault.types.sol";
+import {DepositParams, DepositCommitmentParams, IVaultErrors} from "src/Vault.types.sol";
 import {PermitUtils} from "./Permit.util.sol";
 
 // solhint-disable max-states-count
-contract VaultTest is Test {
+contract VaultTest is Test, IVaultErrors {
   Vault internal vault;
   MockVerifier internal depositVerifier;
   MockVerifier internal spend11Verifier;
@@ -106,7 +106,7 @@ contract VaultTest is Test {
     mockToken.mint(charlie, 1000e18);
   }
 
-  function prepareTvlConfig(uint240 amount) internal returns (TokenTVLConfig[] memory) {
+  function prepareTvlConfig(uint240 amount) internal view returns (TokenTVLConfig[] memory) {
     TokenTVLConfig[] memory c = new TokenTVLConfig[](1);
     c[0] = TokenTVLConfig(address(mockToken), amount);
     return c;

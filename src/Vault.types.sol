@@ -168,3 +168,17 @@ interface IVault is IVaultEvents {
 interface ICommitmentsRecipient {
   function onCommitmentsReceived(address from, Transaction calldata transaction, bytes calldata data) external;
 }
+
+// Custom errors for gas optimization
+interface IVaultErrors {
+  error PermitExpired();
+  error AmountMustBeGreaterThanZero();
+  error AmountExceedsMaxTVL(uint256 currentBalance, uint256 amount, uint240 maxTVL);
+  error InvalidZKProof();
+  error CommitmentAlreadyUsed(uint256 poseidonHash);
+  error InputCommitmentNotFound(uint256 poseidonHash);
+  error NoInputsProvided();
+  error NoOutputsProvided();
+  error OnlyAssignedAddressCanWithdraw(address token, uint256 poseidonHash, address caller);
+  error UnequalTotalAmounts(uint256 totalProvided, uint256 totalRequested, uint240 fee);
+}

@@ -18,7 +18,8 @@
     "gas": "forge snapshot",
     "format": "forge fmt src/; forge fmt test/",
     "lint": "solhint src/**/*.sol && eslint .",
-    "deploy": "rm -rf ignition/deployments/chain-31337; hardhat run scripts/deploy.ts --network",
+    "deploy:vault": "rm -rf ignition/deployments/chain-31337; hardhat run scripts/deploy.ts --network",
+    "deploy:invoiceFactory": "rm -rf ignition/deployments/chain-31337; hardhat run scripts/deployInvoiceFactory.ts --network",
     "abi": "hardhat export-abi",
     "prepareFeesParams": "hardhat run scripts/protocolManager/prepareFeesParams.ts --network",
     "prepare": "husky"

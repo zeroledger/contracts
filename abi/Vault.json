@@ -56,6 +56,43 @@
   {
     "inputs": [
       {
+        "internalType": "uint256",
+        "name": "currentBalance",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint240",
+        "name": "maxTVL",
+        "type": "uint240"
+      }
+    ],
+    "name": "AmountExceedsMaxTVL",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "AmountMustBeGreaterThanZero",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "poseidonHash",
+        "type": "uint256"
+      }
+    ],
+    "name": "CommitmentAlreadyUsed",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "address",
         "name": "implementation",
         "type": "address"
@@ -85,13 +122,65 @@
     "type": "error"
   },
   {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "poseidonHash",
+        "type": "uint256"
+      }
+    ],
+    "name": "InputCommitmentNotFound",
+    "type": "error"
+  },
+  {
     "inputs": [],
     "name": "InvalidInitialization",
     "type": "error"
   },
   {
     "inputs": [],
+    "name": "InvalidZKProof",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NoInputsProvided",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NoOutputsProvided",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "NotInitializing",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "poseidonHash",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "caller",
+        "type": "address"
+      }
+    ],
+    "name": "OnlyAssignedAddressCanWithdraw",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "PermitExpired",
     "type": "error"
   },
   {
@@ -124,6 +213,27 @@
       }
     ],
     "name": "UUPSUnsupportedProxiableUUID",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "totalProvided",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "totalRequested",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint240",
+        "name": "fee",
+        "type": "uint240"
+      }
+    ],
+    "name": "UnequalTotalAmounts",
     "type": "error"
   },
   {

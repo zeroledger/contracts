@@ -72,9 +72,9 @@ describe("Vault Deposit Tests", function () {
       );
 
       // Second deposit with same commitments should fail
-      await expect(vault.connect(testData.user).deposit(depositParams, proofData.calldata_proof)).to.be.revertedWith(
-        "Vault: Commitment already used",
-      );
+      await expect(
+        vault.connect(testData.user).deposit(depositParams, proofData.calldata_proof),
+      ).to.be.revertedWithCustomError(vault, "CommitmentAlreadyUsed");
     });
 
     it("should fail with invalid ZK proof", async function () {
@@ -111,9 +111,9 @@ describe("Vault Deposit Tests", function () {
       await approveTokens(testData.user, totalAmount, vault, mockToken);
 
       // Act & Assert
-      await expect(vault.connect(testData.user).deposit(depositParams, proofData.calldata_proof)).to.be.revertedWith(
-        "Vault: Invalid ZK proof",
-      );
+      await expect(
+        vault.connect(testData.user).deposit(depositParams, proofData.calldata_proof),
+      ).to.be.revertedWithCustomError(vault, "InvalidZKProof");
     });
 
     it("should fail with zero amount", async function () {
@@ -143,9 +143,9 @@ describe("Vault Deposit Tests", function () {
       await approveTokens(testData.user, totalAmount, vault, mockToken);
 
       // Act & Assert
-      await expect(vault.connect(testData.user).deposit(depositParams, proofData.calldata_proof)).to.be.revertedWith(
-        "Vault: Amount must be greater than 0",
-      );
+      await expect(
+        vault.connect(testData.user).deposit(depositParams, proofData.calldata_proof),
+      ).to.be.revertedWithCustomError(vault, "AmountMustBeGreaterThanZero");
     });
   });
 

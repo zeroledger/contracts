@@ -2,7 +2,7 @@
 pragma solidity >=0.8.21;
 
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
-import {Invoice} from "./Invoice.sol";
+import {Invoice, InvoiceLib, DepositCommitmentParams} from "./Invoice.sol";
 
 /**
  * @dev Factory contract for deploying Invoice clones using CREATE2.
@@ -55,18 +55,18 @@ contract InvoiceFactory {
    * @param token The address of the token
    * @param amount The amount of tokens
    * @param executionFee The execution fee
-   * @param commitmentParamsHash The hash of the commitment parameters
+   * @param commitmentParams DepositCommitmentParams tuple
    * @param executor The priority executor address
-   * @return The computed paramsHash
+   * @return paramsHash
    */
   function computeParamsHash(
     address vault,
     address token,
     uint240 amount,
     uint240 executionFee,
-    bytes32 commitmentParamsHash,
+    DepositCommitmentParams[3] calldata commitmentParams,
     address executor
   ) public pure returns (bytes32) {
-    return keccak256(abi.encode(vault, token, amount, executionFee, commitmentParamsHash, executor));
+    return InvoiceLib.computeParamsHash(vault, token, amount, executionFee, commitmentParams, executor);
   }
 }

@@ -2,9 +2,9 @@
 pragma solidity >=0.8.21;
 
 import {VaultTest} from "./VaultTest.util.sol";
-import {Invoice} from "src/Invoice.sol";
-import {InvoiceFactory} from "src/InvoiceFactory.sol";
-import {DepositParams, DepositCommitmentParams, IVaultEvents} from "src/Vault.types.sol";
+import {Invoice} from "src/invoice/Invoice.sol";
+import {InvoiceFactory} from "src/invoice/InvoiceFactory.sol";
+import {DepositCommitmentParams, IVaultEvents} from "src/Vault.types.sol";
 import {Fees} from "src/ProtocolManager.sol";
 
 contract InvoiceTest is VaultTest, IVaultEvents {

@@ -5,8 +5,9 @@ import VaultModule from "./Vault.module";
 import ForwarderModule from "./Forwarder.module";
 import ProtocolManagerModule from "./ProtocolManager.module";
 import AdministratorModule from "./Administrator.module";
+import InvoiceFactoryModule from "./InvoiceFactory.module";
 
-export default buildModule("Proxy", (m) => {
+export default buildModule("Main", (m) => {
   const { mockERC20 } = m.useModule(MockERC20Module);
   const { verifiers, ...circuitVerifiers } = m.useModule(VerifiersModule);
   const { administrator } = m.useModule(AdministratorModule);
@@ -14,6 +15,7 @@ export default buildModule("Proxy", (m) => {
   const { vault: vaultImplementation, poseidonT3, inputsLib } = m.useModule(VaultModule);
   const { forwarder: forwarderImplementation } = m.useModule(ForwarderModule);
   const { protocolManager: protocolManagerImplementation } = m.useModule(ProtocolManagerModule);
+  const { invoiceFactory } = m.useModule(InvoiceFactoryModule);
 
   const forwarderProxy = m.contract("ERC1967Proxy", [forwarderImplementation, "0x"], { id: "ForwarderProxy" });
   const protocolManagerProxy = m.contract("ERC1967Proxy", [protocolManagerImplementation, "0x"], {
@@ -41,6 +43,7 @@ export default buildModule("Proxy", (m) => {
     administrator,
     poseidonT3,
     inputsLib,
+    invoiceFactory,
     ...circuitVerifiers,
   };
 });

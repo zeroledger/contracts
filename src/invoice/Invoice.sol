@@ -1,15 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.21;
 
-import {IVault, DepositParams, DepositCommitmentParams} from "./Vault.types.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {IVault, DepositParams, DepositCommitmentParams} from "src/Vault.types.sol";
 
-/**
- * @dev Contract for a one-time invoice with a priority deadline.
- * Using deployCreate2Clone, the invoice initiator can preview the invoice address and request payment.
- * Once payment is received, the invoice can be deployed and executed.
- * The executionFee should cover contract deployment and execution costs.
- */
+import {InvoiceLib} from "./Invoice.lib.sol";
+
 contract Invoice is Initializable {
   struct InvoiceState {
     bytes32 paramsHash;
@@ -59,7 +55,8 @@ contract Invoice is Initializable {
     address executor
   ) external {
     InvoiceState storage $ = _getStorage();
-    bytes32 computedParamsHash = keccak256(abi.encode(vault, token, amount, executionFee, commitmentParams, executor));
+    bytes32 computedParamsHash =
+      InvoiceLib.computeParamsHash(vault, token, amount, executionFee, commitmentParams, executor);
     require(computedParamsHash == $.paramsHash, "Invoice: Invalid params hash");
     if (block.timestamp < $.priorityDeadline) {
       IVault(vault).deposit(DepositParams(token, amount, commitmentParams, executionFee, executor), proof);

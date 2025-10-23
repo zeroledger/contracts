@@ -11,10 +11,8 @@ import {
   Vault,
 } from "../../typechain-types/src/Vault";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import { Administrator, Forwarder, Verifiers } from "../../typechain-types/src";
-import { ProtocolManager } from "../../typechain-types/src/ProtocolManager";
-import { MockERC20 } from "../../typechain-types/src/helpers/MockERC20";
-import ProxyModule from "../../ignition/modules/Proxy.module";
+import { Administrator, Forwarder, Verifiers, InvoiceFactory, ProtocolManager, MockERC20 } from "../../typechain-types";
+import MainModule from "../../ignition/modules/Main.module";
 
 // Types for better organization
 export interface DepositTestData {
@@ -55,6 +53,7 @@ export interface TestFixture {
   otherUser: HardhatEthersSigner;
   forwarder: Forwarder; // Add zeroLedgerForwarder for meta-tx tests
   protocolManager: ProtocolManager;
+  invoiceFactory: InvoiceFactory;
   forwarderFeeRecipient: string;
   administrator: Administrator;
 }
@@ -105,9 +104,8 @@ const mockMetadata = randomBytes(32);
 export async function deployVaultFixture(): Promise<TestFixture> {
   const [owner, user, otherUser, forwarderFeeRecipient] = await ethers.getSigners();
 
-  const { verifiers, vault, forwarder, protocolManager, administrator, mockERC20 } = await ignition.deploy(
-    ProxyModule,
-    {
+  const { verifiers, vault, forwarder, protocolManager, administrator, mockERC20, invoiceFactory } =
+    await ignition.deploy(MainModule, {
       parameters: {
         Administrator: {
           admin: owner.address,
@@ -116,12 +114,11 @@ export async function deployVaultFixture(): Promise<TestFixture> {
           securityCouncil: owner.address,
           defaultUpgradeDelay: 12 * 60 * 60,
         },
-        Proxy: {
+        Main: {
           maxTVL: ethers.parseEther("10000"),
         },
       },
-    },
-  );
+    });
 
   // Mint tokens to users for testing
   const mintAmount = ethers.parseEther("1000");
@@ -144,6 +141,7 @@ export async function deployVaultFixture(): Promise<TestFixture> {
     forwarder: forwarder as unknown as Forwarder, // Export the forwarder for meta-tx tests
     administrator: administrator as unknown as Administrator,
     protocolManager: protocolManager as unknown as ProtocolManager,
+    invoiceFactory: invoiceFactory as unknown as InvoiceFactory,
     forwarderFeeRecipient: forwarderFeeRecipient.address,
   };
 }

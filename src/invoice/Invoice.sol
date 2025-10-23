@@ -7,10 +7,14 @@ import {IVault, DepositParams, DepositCommitmentParams} from "src/Vault.types.so
 import {InvoiceLib} from "./Invoice.lib.sol";
 
 contract Invoice is Initializable {
+  event InvoiceProcessed(address indexed vault, address indexed token, uint256 indexed amount);
+
   struct InvoiceState {
     bytes32 paramsHash;
     uint256 priorityDeadline;
   }
+
+  address public immutable factory;
 
   // keccak256(abi.encode(uint256(keccak256("invoice.zeroledger")) - 1)) & ~bytes32(uint256(0xff))
   bytes32 internal constant STORAGE_LOCATION = 0xf1ee228d9f24f6e688c439ca913a801b6d219979c1a4f6a63061be9d75e25000;
@@ -24,10 +28,21 @@ contract Invoice is Initializable {
 
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
+    factory = msg.sender;
     _disableInitializers();
   }
 
-  function initialize(bytes32 paramsHash_) public initializer {
+  modifier onlyFactory() {
+    require(msg.sender == factory, "Invoice: Only factory can initialize");
+    _;
+  }
+
+  /**
+   * @dev Initializes the invoice clone. Can only be called by the factory via deployInvoice.
+   * This ensures that the paramsHash used for initialization matches the one used for address prediction.
+   * @param paramsHash_ The hash of invoice parameters
+   */
+  function initialize(bytes32 paramsHash_) public initializer onlyFactory {
     InvoiceState storage $ = _getStorage();
     $.paramsHash = paramsHash_;
     $.priorityDeadline = block.timestamp + 1 days;
@@ -45,7 +60,7 @@ contract Invoice is Initializable {
    * @param proof The ZK proof for the deposit
    * @param executor The address of the priority executor (before deadline)
    */
-  function createInvoice(
+  function processInvoice(
     address vault,
     address token,
     uint240 amount,
@@ -63,5 +78,7 @@ contract Invoice is Initializable {
     } else {
       IVault(vault).deposit(DepositParams(token, amount, commitmentParams, executionFee, msg.sender), proof);
     }
+
+    emit InvoiceProcessed(vault, token, amount);
   }
 }

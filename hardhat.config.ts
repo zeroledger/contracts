@@ -26,6 +26,14 @@ export default {
       appendCBOR: false,
     },
   },
+  ignition: {
+    strategyConfig: {
+      create2: {
+        // To learn more about salts, see the CreateX documentation
+        salt: "0x5f1063e70ecbd8200e3e2e867f60be32528625ab015e786d0abd2e448f8707b4",
+      },
+    },
+  },
   paths: {
     sources: "src",
     tests: "integration",
@@ -34,7 +42,7 @@ export default {
     path: "./abi",
     runOnCompile: false,
     clear: true,
-    only: ["Vault", "MockERC20", "Forwarder", "ProtocolManager", "Administrator", "InvoiceFactory"],
+    only: ["Vault", "MockERC20", "Forwarder", "ProtocolManager", "Administrator", "InvoiceFactory", "Invoice"],
     flat: true,
     spacing: 2,
     format: "json",

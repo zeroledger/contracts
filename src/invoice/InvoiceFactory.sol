@@ -33,10 +33,10 @@ contract InvoiceFactory {
 
   /**
    * @dev Deploys a new invoice clone using CREATE2
-   * @param paramsHash The hash of the invoice parameters (vault, token, amount, etc.) - used as salt
+   * @param paramsHash The hash of the invoice parameters, see computeParamsHash function
    * @return invoiceAddress The address of the deployed invoice clone
    */
-  function deployInvoice(bytes32 paramsHash) external returns (address invoiceAddress) {
+  function deployInvoice(bytes32 paramsHash) public returns (address invoiceAddress) {
     // Deploy the clone using CREATE2 with paramsHash as salt
     invoiceAddress = Clones.cloneDeterministic(invoiceImplementation, paramsHash);
 
@@ -45,6 +45,31 @@ contract InvoiceFactory {
 
     emit InvoiceDeployed(invoiceAddress, paramsHash);
 
+    return invoiceAddress;
+  }
+
+  /**
+   * @dev Deploys a new invoice clone and executes it
+   * @param token The address of the token
+   * @param amount The amount of tokens
+   * @param executionFee The execution fee
+   * @param commitmentParams The commitment parameters
+   * @param proof The proof
+   * @param executor The executor
+   * @return invoiceAddress The address of the deployed invoice clone
+   */
+  function deployAndProcessInvoice(
+    address vault,
+    address token,
+    uint240 amount,
+    uint240 executionFee,
+    DepositCommitmentParams[3] calldata commitmentParams,
+    uint256[24] calldata proof,
+    address executor
+  ) external returns (address invoiceAddress) {
+    bytes32 paramsHash = computeParamsHash(vault, token, amount, executionFee, commitmentParams, executor);
+    invoiceAddress = deployInvoice(paramsHash);
+    Invoice(invoiceAddress).processInvoice(vault, token, amount, executionFee, commitmentParams, proof, executor);
     return invoiceAddress;
   }
 

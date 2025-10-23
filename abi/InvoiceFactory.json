@@ -127,6 +127,72 @@
   {
     "inputs": [
       {
+        "internalType": "address",
+        "name": "vault",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "internalType": "uint240",
+        "name": "amount",
+        "type": "uint240"
+      },
+      {
+        "internalType": "uint240",
+        "name": "executionFee",
+        "type": "uint240"
+      },
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "poseidonHash",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "owner",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes",
+            "name": "metadata",
+            "type": "bytes"
+          }
+        ],
+        "internalType": "struct DepositCommitmentParams[3]",
+        "name": "commitmentParams",
+        "type": "tuple[3]"
+      },
+      {
+        "internalType": "uint256[24]",
+        "name": "proof",
+        "type": "uint256[24]"
+      },
+      {
+        "internalType": "address",
+        "name": "executor",
+        "type": "address"
+      }
+    ],
+    "name": "deployAndProcessInvoice",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "invoiceAddress",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "bytes32",
         "name": "paramsHash",
         "type": "bytes32"

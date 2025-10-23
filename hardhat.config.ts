@@ -30,6 +30,13 @@ export default {
     sources: "src",
     tests: "integration",
   },
+  ignition: {
+    strategyConfig: {
+      create2: {
+        salt: "0x5f1063e70ecbd8200e3e2e867f60be32528625ab015e786d0abd2e448f8707b4",
+      },
+    },
+  },
   abiExporter: {
     path: "./abi",
     runOnCompile: false,

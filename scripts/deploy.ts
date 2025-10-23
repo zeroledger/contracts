@@ -1,5 +1,5 @@
 import hre from "hardhat";
-import ProxyModule from "../ignition/modules/Proxy.module";
+import MainModule from "../ignition/modules/Main.module";
 import { getBytes, id, concat } from "ethers";
 import { NetworkConfig } from "hardhat/types";
 
@@ -51,25 +51,34 @@ async function main() {
   salt: ${salt}
   `);
 
-  const { mockERC20, inputsLib, poseidonT3, verifiers, vault, forwarder, protocolManager, administrator } =
-    await hre.ignition.deploy(ProxyModule, {
-      parameters: {
-        Administrator: {
-          admin: admin,
-          maintainer: maintainer,
-          treasureManager: treasureManager,
-          securityCouncil: securityCouncil,
-          defaultUpgradeDelay: 6 * 60 * 60,
-        },
-        Proxy: {
-          maxTVL: hre.ethers.parseEther("1000000"),
-        },
+  const {
+    mockERC20,
+    inputsLib,
+    poseidonT3,
+    verifiers,
+    vault,
+    forwarder,
+    protocolManager,
+    administrator,
+    invoiceFactory,
+  } = await hre.ignition.deploy(MainModule, {
+    parameters: {
+      Administrator: {
+        admin: admin,
+        maintainer: maintainer,
+        treasureManager: treasureManager,
+        securityCouncil: securityCouncil,
+        defaultUpgradeDelay: 6 * 60 * 60,
       },
-      strategy: hre.network.name === "hardhat" ? "basic" : "create2",
-      strategyConfig: {
-        salt,
+      Main: {
+        maxTVL: hre.ethers.parseEther("1000000"),
       },
-    });
+    },
+    strategy: hre.network.name === "hardhat" ? "basic" : "create2",
+    strategyConfig: {
+      salt,
+    },
+  });
 
   const [
     mockERC20Address,
@@ -80,6 +89,7 @@ async function main() {
     forwarderAddress,
     protocolManagerAddress,
     administratorAddress,
+    invoiceFactoryAddress,
   ] = await Promise.all([
     mockERC20.getAddress(),
     inputsLib.getAddress(),
@@ -89,6 +99,7 @@ async function main() {
     forwarder.getAddress(),
     protocolManager.getAddress(),
     administrator.getAddress(),
+    invoiceFactory.getAddress(),
   ]);
 
   console.log(`Contracts deployed. Addresses:
@@ -101,6 +112,7 @@ async function main() {
   forwarder: ${forwarderAddress}
   protocolManager: ${protocolManagerAddress}
   administrator: ${administratorAddress}
+  invoiceFactory: ${invoiceFactoryAddress}
   `);
 
   console.log(`Checking initialization of contracts...`);

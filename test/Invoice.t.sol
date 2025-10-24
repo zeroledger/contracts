@@ -71,8 +71,11 @@ contract InvoiceTest is VaultTest, IVaultEvents {
   // Test 5: Execute invoice before priority deadline using deployAndProcessInvoice
   function test_execute_invoice_before_deadline() public {
     // Prepare deposit parameters
-    uint240 depositAmount = 100e18;
+    // Note: depositAmount should include ALL fees (deposit fee + execution fee)
+    uint240 depositFee = 5e18;
     uint240 executionFee = 10e18;
+    uint240 netDepositAmount = 100e18; // The actual amount going into commitments
+    uint240 depositAmount = netDepositAmount + depositFee + executionFee; // Total including all fees
     address executor = bob;
 
     DepositCommitmentParams[3] memory commitmentParams;
@@ -86,13 +89,8 @@ contract InvoiceTest is VaultTest, IVaultEvents {
     );
     address predictedInvoiceAddress = invoiceFactory.computeInvoiceAddress(paramsHash);
 
-    // Fund the predicted invoice contract address
-    uint256 totalAmount = depositAmount + 5e18 + executionFee;
-    mockToken.mint(predictedInvoiceAddress, totalAmount);
-
-    // Approve vault to spend from invoice
-    vm.prank(predictedInvoiceAddress);
-    mockToken.approve(address(vault), totalAmount);
+    // Fund the predicted invoice contract address with the total amount
+    mockToken.mint(predictedInvoiceAddress, depositAmount);
 
     // Set up verifier
     depositVerifier.setVerificationResult(true);
@@ -134,10 +132,6 @@ contract InvoiceTest is VaultTest, IVaultEvents {
     // Fund the predicted invoice contract address
     uint256 totalAmount = depositAmount + 5e18 + executionFee;
     mockToken.mint(predictedInvoiceAddress, totalAmount);
-
-    // Approve vault to spend from invoice
-    vm.prank(predictedInvoiceAddress);
-    mockToken.approve(address(vault), totalAmount);
 
     // Set up verifier
     depositVerifier.setVerificationResult(true);

@@ -149,19 +149,27 @@ contract Vault is
     nonReentrant
     whenNotPaused
   {
-    _deposit(depositParams, proof);
     address from = _msgSender();
-    IERC20 t = IERC20(depositParams.token);
-    t.safeTransferFrom(from, address(this), depositParams.amount);
     State storage $ = _getStorage();
     uint240 depositFee = $.manager.getFees(depositParams.token).deposit;
+
+    uint240 totalFees = depositFee + depositParams.forwarderFee;
+    if (depositParams.amount <= totalFees) revert AmountMustBeGreaterThanZero();
+
+    uint240 netDepositAmount = depositParams.amount - totalFees;
+
+    _deposit(depositParams.token, netDepositAmount, depositParams.depositCommitmentParams, proof);
+
+    IERC20 t = IERC20(depositParams.token);
+    t.safeTransferFrom(from, address(this), depositParams.amount);
+
     if (depositFee > 0) {
-      t.safeTransferFrom(from, address($.manager), depositFee);
+      t.safeTransfer(address($.manager), depositFee);
     }
     if (depositParams.forwarderFee > 0) {
-      t.safeTransferFrom(from, depositParams.forwarderFeeRecipient, depositParams.forwarderFee);
+      t.safeTransfer(depositParams.forwarderFeeRecipient, depositParams.forwarderFee);
     }
-    emit Deposit(from, depositParams.token, depositParams.amount);
+    emit Deposit(from, depositParams.token, netDepositAmount);
   }
 
   function depositWithPermit(
@@ -173,42 +181,47 @@ contract Vault is
     bytes32 s
   ) external nonReentrant whenNotPaused {
     if (deadline < block.timestamp) revert PermitExpired();
-    _deposit(depositParams, proof);
-    State storage $ = _getStorage();
-    uint256 depositFee = $.manager.getFees(depositParams.token).deposit;
     address from = _msgSender();
+    State storage $ = _getStorage();
+    uint240 depositFee = $.manager.getFees(depositParams.token).deposit;
 
-    IERC20Permit(depositParams.token).permit(
-      from, address(this), depositParams.amount + depositFee + depositParams.forwarderFee, deadline, v, r, s
-    );
+    uint240 totalFees = depositFee + depositParams.forwarderFee;
+    if (depositParams.amount <= totalFees) revert AmountMustBeGreaterThanZero();
+
+    uint240 netDepositAmount = depositParams.amount - totalFees;
+
+    IERC20Permit(depositParams.token).permit(from, address(this), depositParams.amount, deadline, v, r, s);
+
+    _deposit(depositParams.token, netDepositAmount, depositParams.depositCommitmentParams, proof);
 
     IERC20 t = IERC20(depositParams.token);
-
     t.safeTransferFrom(from, address(this), depositParams.amount);
+
     if (depositFee > 0) {
-      t.safeTransferFrom(from, address($.manager), depositFee);
+      t.safeTransfer(address($.manager), depositFee);
     }
     if (depositParams.forwarderFee > 0) {
-      t.safeTransferFrom(from, depositParams.forwarderFeeRecipient, depositParams.forwarderFee);
+      t.safeTransfer(depositParams.forwarderFeeRecipient, depositParams.forwarderFee);
     }
 
-    emit Deposit(from, depositParams.token, depositParams.amount);
+    emit Deposit(from, depositParams.token, netDepositAmount);
   }
 
-  function _deposit(DepositParams calldata depositParams, uint256[24] calldata proof) internal {
+  function _deposit(
+    address token,
+    uint256 netAmount,
+    DepositCommitmentParams[3] calldata depositCommitmentParams,
+    uint256[24] calldata proof
+  ) internal {
     State storage $ = _getStorage();
-    address token = depositParams.token;
-    uint256 amount = depositParams.amount;
-    DepositCommitmentParams[3] calldata depositCommitmentParams = depositParams.depositCommitmentParams;
-    if (amount == 0) revert AmountMustBeGreaterThanZero();
+    if (netAmount == 0) revert AmountMustBeGreaterThanZero();
     uint240 maxTVL = $.manager.getMaxTVL(token);
     uint256 currentBalance = IERC20(token).balanceOf(address(this));
-    if (currentBalance + amount > maxTVL) revert AmountExceedsMaxTVL(currentBalance, amount, maxTVL);
-    if (!$.verifiers.depositVerifier().verify(proof, InputsLib.depositInputs(depositCommitmentParams, amount))) {
+    if (currentBalance + netAmount > maxTVL) revert AmountExceedsMaxTVL(currentBalance, netAmount, maxTVL);
+    if (!$.verifiers.depositVerifier().verify(proof, InputsLib.depositInputs(depositCommitmentParams, netAmount))) {
       revert InvalidZKProof();
     }
 
-    // Check that no commitment has been used before and
     for (uint256 i = 0; i < depositCommitmentParams.length; i++) {
       uint256 poseidonHash = depositCommitmentParams[i].poseidonHash;
       if (poseidonHash == InputsLib.SHARED_INPUT) {

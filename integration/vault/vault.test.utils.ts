@@ -214,10 +214,13 @@ export async function createDepositParams(
   testData: DepositTestData,
   commitmentData: CommitmentData,
   mockToken: MockERC20,
+  depositFee: bigint,
 ): Promise<DepositParamsStruct> {
+  // depositParams.amount should now include all fees (depositFee + forwarderFee)
+  const totalAmount = testData.depositAmount + depositFee + testData.forwarderFee;
   return {
     token: await mockToken.getAddress(),
-    amount: testData.depositAmount,
+    amount: totalAmount,
     depositCommitmentParams: commitmentData.depositCommitmentParams,
     forwarderFee: testData.forwarderFee,
     forwarderFeeRecipient: testData.forwarderFeeRecipient,
@@ -484,7 +487,7 @@ export async function deposit(
   const depositFee = (await getFees(protocolManager, mockToken)).deposit;
   // Arrange
   const testData: DepositTestData = {
-    depositAmount: individualAmounts.reduce((a, b) => a + b, 0n),
+    depositAmount: individualAmounts.reduce((a, b) => a + b, 0n), // This is the NET amount
     individualAmounts,
     user,
     forwarderFee,
@@ -500,9 +503,12 @@ export async function deposit(
     commitmentData.sValues,
   );
 
-  const depositParams = await createDepositParams(testData, commitmentData, mockToken);
+  // createDepositParams now calculates the total amount including fees
+  const depositParams = await createDepositParams(testData, commitmentData, mockToken, depositFee);
 
-  await approveTokens(testData.user, testData.depositAmount + depositFee + testData.forwarderFee, vault, mockToken);
+  // Approve for the total amount
+  const totalAmount = testData.depositAmount + depositFee + testData.forwarderFee;
+  await approveTokens(testData.user, totalAmount, vault, mockToken);
 
   // Act
   const tx = await vault.connect(testData.user).deposit(depositParams, proofData.calldata_proof);

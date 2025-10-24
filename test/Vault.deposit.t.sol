@@ -86,7 +86,7 @@ contract VaultDepositTest is VaultTest, IVaultEvents {
 
     DepositParams memory depositParams = DepositParams({
       token: address(mockToken),
-      amount: defaultDepositAmount,
+      amount: defaultTotalAmount, // Now includes all fees
       depositCommitmentParams: commitmentParams,
       forwarderFee: defaultForwarderFee,
       forwarderFeeRecipient: address(zeroLedgerForwarder)
@@ -147,7 +147,7 @@ contract VaultDepositTest is VaultTest, IVaultEvents {
 
     DepositParams memory depositParams = DepositParams({
       token: address(mockToken),
-      amount: defaultDepositAmount,
+      amount: defaultTotalAmount, // Now includes all fees
       depositCommitmentParams: commitmentParams,
       forwarderFee: defaultForwarderFee,
       forwarderFeeRecipient: address(zeroLedgerForwarder)
@@ -214,7 +214,7 @@ contract VaultDepositTest is VaultTest, IVaultEvents {
 
     DepositParams memory depositParams = DepositParams({
       token: address(mockToken),
-      amount: defaultDepositAmount,
+      amount: defaultTotalAmount, // Now includes all fees
       depositCommitmentParams: commitmentParams,
       forwarderFee: defaultForwarderFee,
       forwarderFeeRecipient: address(zeroLedgerForwarder)
@@ -247,7 +247,7 @@ contract VaultDepositTest is VaultTest, IVaultEvents {
 
     DepositParams memory depositParams = DepositParams({
       token: address(mockToken),
-      amount: defaultDepositAmount,
+      amount: defaultTotalAmount, // Now includes all fees
       depositCommitmentParams: commitmentParams,
       forwarderFee: defaultForwarderFee,
       forwarderFeeRecipient: address(zeroLedgerForwarder)
@@ -277,7 +277,7 @@ contract VaultDepositTest is VaultTest, IVaultEvents {
 
     DepositParams memory depositParams = DepositParams({
       token: address(mockToken),
-      amount: defaultDepositAmount,
+      amount: defaultTotalAmount, // Now includes all fees
       depositCommitmentParams: commitmentParams,
       forwarderFee: defaultForwarderFee,
       forwarderFeeRecipient: address(zeroLedgerForwarder)
@@ -305,7 +305,7 @@ contract VaultDepositTest is VaultTest, IVaultEvents {
 
     DepositParams memory depositParams = DepositParams({
       token: address(mockToken),
-      amount: defaultDepositAmount,
+      amount: defaultTotalAmount, // Now includes all fees
       depositCommitmentParams: commitmentParams,
       forwarderFee: defaultForwarderFee,
       forwarderFeeRecipient: address(zeroLedgerForwarder)
@@ -337,7 +337,7 @@ contract VaultDepositTest is VaultTest, IVaultEvents {
 
     DepositParams memory depositParams = DepositParams({
       token: address(mockToken),
-      amount: defaultDepositAmount,
+      amount: defaultTotalAmount, // Now includes all fees
       depositCommitmentParams: commitmentParams,
       forwarderFee: defaultForwarderFee,
       forwarderFeeRecipient: address(zeroLedgerForwarder)
@@ -365,7 +365,7 @@ contract VaultDepositTest is VaultTest, IVaultEvents {
 
     DepositParams memory depositParams = DepositParams({
       token: address(mockToken),
-      amount: defaultDepositAmount,
+      amount: defaultTotalAmount, // Now includes all fees
       depositCommitmentParams: commitmentParams,
       forwarderFee: defaultForwarderFee,
       forwarderFeeRecipient: address(zeroLedgerForwarder)
@@ -399,7 +399,7 @@ contract VaultDepositTest is VaultTest, IVaultEvents {
 
     DepositParams memory depositParams = DepositParams({
       token: address(mockToken),
-      amount: defaultDepositAmount,
+      amount: defaultTotalAmount, // Now includes all fees
       depositCommitmentParams: commitmentParams,
       forwarderFee: defaultForwarderFee,
       forwarderFeeRecipient: address(zeroLedgerForwarder)
@@ -436,7 +436,7 @@ contract VaultDepositTest is VaultTest, IVaultEvents {
 
     DepositParams memory depositParams = DepositParams({
       token: address(mockToken),
-      amount: defaultDepositAmount,
+      amount: defaultTotalAmount, // Now includes all fees
       depositCommitmentParams: commitmentParams,
       forwarderFee: defaultForwarderFee,
       forwarderFeeRecipient: address(zeroLedgerForwarder)
@@ -517,7 +517,7 @@ contract VaultDepositTest is VaultTest, IVaultEvents {
 
     DepositParams memory depositParams = DepositParams({
       token: address(mockToken),
-      amount: defaultDepositAmount,
+      amount: defaultTotalAmount, // Now includes all fees
       depositCommitmentParams: commitmentParams,
       forwarderFee: defaultForwarderFee,
       forwarderFeeRecipient: address(zeroLedgerForwarder)
@@ -553,7 +553,7 @@ contract VaultDepositTest is VaultTest, IVaultEvents {
 
     DepositParams memory depositParams = DepositParams({
       token: address(mockToken),
-      amount: defaultDepositAmount,
+      amount: defaultTotalAmount, // Now includes all fees
       depositCommitmentParams: commitmentParams,
       forwarderFee: defaultForwarderFee,
       forwarderFeeRecipient: address(zeroLedgerForwarder)
@@ -585,7 +585,7 @@ contract VaultDepositTest is VaultTest, IVaultEvents {
 
     DepositParams memory depositParams = DepositParams({
       token: address(mockToken),
-      amount: defaultDepositAmount,
+      amount: defaultTotalAmount, // Now includes all fees
       depositCommitmentParams: commitmentParams,
       forwarderFee: defaultForwarderFee,
       forwarderFeeRecipient: address(zeroLedgerForwarder)

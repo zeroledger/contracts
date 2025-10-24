@@ -14,16 +14,17 @@ contract VaultSpend11Test is VaultTest, IVaultEvents {
   function test_spend11_success() public {
     // Setup: Create a deposit first to establish commitments
     uint240 depositAmount = uint240(100e18);
-    uint240 fee = uint240(5e18);
+    uint240 depositFee = uint240(0); // No deposit fee
+    uint240 spendFee = uint240(5e18);
     uint240 forwarderFee = uint240(5e18);
-    protocolManager.setFees(address(mockToken), Fees({deposit: 0, spend: fee, withdraw: 0}));
+    protocolManager.setFees(address(mockToken), Fees({deposit: depositFee, spend: spendFee, withdraw: 0}));
 
     // Create unique poseidon hashes for the deposit
     uint256[3] memory depositHashes = [uint256(123456789), uint256(987654321), uint256(555666777)];
     address[3] memory depositOwners = [alice, bob, charlie];
 
-    // Create the initial deposit
-    createDeposit(alice, depositAmount, fee, forwarderFee, depositHashes, depositOwners);
+    // Create the initial deposit (depositAmount is NET, function calculates total)
+    createDeposit(alice, depositAmount, depositFee, forwarderFee, depositHashes, depositOwners);
 
     // Now create a spend11 transaction (1 input, 1 output)
     uint256 inputHash = depositHashes[0]; // Use the first commitment as input

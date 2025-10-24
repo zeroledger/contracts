@@ -3,6 +3,7 @@ pragma solidity >=0.8.21;
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {IVault, DepositParams, DepositCommitmentParams} from "src/Vault.types.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import {InvoiceLib} from "./Invoice.lib.sol";
 
@@ -73,6 +74,8 @@ contract Invoice is Initializable {
     bytes32 computedParamsHash =
       InvoiceLib.computeParamsHash(vault, token, amount, executionFee, commitmentParams, executor);
     require(computedParamsHash == $.paramsHash, "Invoice: Invalid params hash");
+    // Note: amount now includes all fees (depositFee + executionFee)
+    IERC20(token).approve(vault, amount);
     if (block.timestamp < $.priorityDeadline) {
       IVault(vault).deposit(DepositParams(token, amount, commitmentParams, executionFee, executor), proof);
     } else {

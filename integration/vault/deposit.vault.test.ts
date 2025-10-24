@@ -98,16 +98,17 @@ describe("Vault Deposit Tests", function () {
         commitmentData.sValues,
       );
 
-      // Create deposit params with mismatched amount
+      const depositFee = (await getFees(protocolManager, mockToken)).deposit;
+      // Create deposit params with mismatched amount (total should be depositAmount + fees, but we subtract 10)
+      const totalAmount = testData.depositAmount + depositFee + testData.forwarderFee;
       const depositParams: DepositParamsStruct = {
         token: await mockToken.getAddress(),
-        amount: testData.depositAmount - 10n,
+        amount: totalAmount - 10n, // Mismatch: wrong total amount
         depositCommitmentParams: commitmentData.depositCommitmentParams,
         forwarderFee: 10n,
         forwarderFeeRecipient,
       };
 
-      const totalAmount = testData.depositAmount + (await getFees(protocolManager, mockToken)).deposit;
       await approveTokens(testData.user, totalAmount, vault, mockToken);
 
       // Act & Assert
@@ -137,8 +138,9 @@ describe("Vault Deposit Tests", function () {
         commitmentData.sValues,
       );
 
-      const depositParams = await createDepositParams(testData, commitmentData, mockToken);
-      const totalAmount = testData.depositAmount + (await getFees(protocolManager, mockToken)).deposit;
+      const depositFee = (await getFees(protocolManager, mockToken)).deposit;
+      const depositParams = await createDepositParams(testData, commitmentData, mockToken, depositFee);
+      const totalAmount = testData.depositAmount + depositFee + testData.forwarderFee;
 
       await approveTokens(testData.user, totalAmount, vault, mockToken);
 
@@ -181,7 +183,7 @@ describe("Vault Deposit Tests", function () {
         forwarderFee,
         forwarderFeeRecipient,
       };
-      const depositParams = await createDepositParams(depositTestData, commitmentData, mockToken);
+      const depositParams = await createDepositParams(depositTestData, commitmentData, mockToken, depositFee);
       const depositCalldata = vault.interface.encodeFunctionData("deposit", [depositParams, proofData.calldata_proof]);
 
       // Prepare ForwardRequestData for deposit only

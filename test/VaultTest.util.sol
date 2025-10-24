@@ -137,6 +137,8 @@ contract VaultTest is Test, IVaultErrors {
   }
 
   // Helper function to create a deposit
+  // Note: depositAmount is now the NET amount (what goes into vault)
+  // The function will calculate the total amount including fees
   function createDeposit(
     address user,
     uint240 depositAmount,
@@ -155,9 +157,12 @@ contract VaultTest is Test, IVaultErrors {
     commitmentParams[2] =
       DepositCommitmentParams({poseidonHash: poseidonHashes[2], owner: owners[2], metadata: "metadata3"});
 
+    // Calculate total amount including all fees
+    uint240 totalAmount = depositAmount + fee + forwarderFee;
+
     DepositParams memory depositParams = DepositParams({
       token: address(mockToken),
-      amount: depositAmount,
+      amount: totalAmount, // Now includes all fees
       depositCommitmentParams: commitmentParams,
       forwarderFee: forwarderFee,
       forwarderFeeRecipient: address(zeroLedgerForwarder)
@@ -166,12 +171,14 @@ contract VaultTest is Test, IVaultErrors {
     uint256[24] memory proof = getDummyProof();
 
     vm.startPrank(user);
-    mockToken.approve(address(vault), uint256(depositAmount + fee + forwarderFee));
+    mockToken.approve(address(vault), uint256(totalAmount));
     vault.deposit(depositParams, proof);
     vm.stopPrank();
   }
 
   // Helper function to create a deposit using permit (native permit support)
+  // Note: depositAmount is now the NET amount (what goes into vault)
+  // The function will calculate the total amount including fees
   function createDepositWithPermit(
     address user,
     uint240 depositAmount,
@@ -190,9 +197,12 @@ contract VaultTest is Test, IVaultErrors {
     commitmentParams[2] =
       DepositCommitmentParams({poseidonHash: poseidonHashes[2], owner: owners[2], metadata: "metadata3"});
 
+    // Calculate total amount including all fees
+    uint240 totalAmount = depositAmount + fee + forwarderFee;
+
     DepositParams memory depositParams = DepositParams({
       token: address(mockToken),
-      amount: depositAmount,
+      amount: totalAmount, // Now includes all fees
       depositCommitmentParams: commitmentParams,
       forwarderFee: forwarderFee,
       forwarderFeeRecipient: address(zeroLedgerForwarder)
@@ -201,9 +211,9 @@ contract VaultTest is Test, IVaultErrors {
     uint256[24] memory proof = getDummyProof();
 
     vm.startPrank(user);
-    // Create permit signature
+    // Create permit signature for the total amount
     PermitUtils.Signature memory signature =
-      doPermit(user, address(vault), uint256(depositAmount + fee + forwarderFee), 0, block.timestamp + 1000);
+      doPermit(user, address(vault), uint256(totalAmount), 0, block.timestamp + 1000);
 
     // Use the new depositWithPermit method
     vault.depositWithPermit(depositParams, proof, block.timestamp + 1000, signature.v, signature.r, signature.s);

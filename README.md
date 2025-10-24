@@ -106,7 +106,7 @@ cp .env.example .env
 
 ### Deployment
 
-- `npm run deploy {network}` - Initial deploy to specified network
+- `npm run deploy:initial {network}` - Initial deploy to specified network
 
 ### Maintenance
 

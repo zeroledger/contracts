@@ -80,7 +80,7 @@ contract Vault is
     __vault_init_unchained(verifiers, trustedForwarder, protocolManager);
   }
 
-  function upgradeCallBack() external reinitializer(1) {}
+  function upgradeCallBack() external reinitializer(2) {}
 
   function _authorizeUpgrade(address newImplementation) internal override restricted {}
 

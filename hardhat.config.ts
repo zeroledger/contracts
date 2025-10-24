@@ -29,7 +29,7 @@ export default {
   ignition: {
     strategyConfig: {
       create2: {
-        // To learn more about salts, see the CreateX documentation
+        // Salt created & imported after `npm run deploy:initial` execution
         salt: "0x5f1063e70ecbd8200e3e2e867f60be32528625ab015e786d0abd2e448f8707b4",
       },
     },

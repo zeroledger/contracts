@@ -30,7 +30,7 @@ jobs:
         with:
           foundry: true
       - run: npm run compile
-      - run: npm run deploy hardhat
+      - run: npm run deploy:initial hardhat
 
   integration-test:
     needs: lint

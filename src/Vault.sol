@@ -5,8 +5,9 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/U
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
-import {AccessManagedUpgradeable} from
-  "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
+import {
+  AccessManagedUpgradeable
+} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 
 // not upgradable contracts & interfaces
 
@@ -25,8 +26,6 @@ import {
   DepositParams,
   OutputsOwners,
   Transaction,
-  WithdrawItem,
-  WithdrawRecipient,
   ICommitmentsRecipient
 } from "./Vault.types.sol";
 import {InputsLib} from "./Inputs.lib.sol";
@@ -69,10 +68,12 @@ contract Vault is
     _disableInitializers();
   }
 
-  function initialize(address verifiers, address trustedForwarder, address protocolManager, address initialAuthority)
-    public
-    initializer
-  {
+  function initialize(
+    address verifiers,
+    address trustedForwarder,
+    address protocolManager,
+    address initialAuthority
+  ) public initializer {
     __UUPSUpgradeable_init();
     __ReentrancyGuard_init();
     __Pausable_init();
@@ -144,11 +145,10 @@ contract Vault is
     _unpause();
   }
 
-  function deposit(DepositParams calldata depositParams, uint256[24] calldata proof)
-    external
-    nonReentrant
-    whenNotPaused
-  {
+  function deposit(
+    DepositParams calldata depositParams,
+    uint256[24] calldata proof
+  ) external nonReentrant whenNotPaused {
     address from = _msgSender();
     State storage $ = _getStorage();
     uint240 depositFee = $.manager.getFees(depositParams.token).deposit;
@@ -230,7 +230,10 @@ contract Vault is
       if ($.commitmentsMap[token][poseidonHash] != address(0)) revert CommitmentAlreadyUsed(poseidonHash);
       $.commitmentsMap[token][poseidonHash] = depositCommitmentParams[i].owner;
       emit CommitmentCreated(
-        depositCommitmentParams[i].owner, token, poseidonHash, depositCommitmentParams[i].metadata
+        depositCommitmentParams[i].owner,
+        token,
+        poseidonHash,
+        depositCommitmentParams[i].metadata
       );
     }
   }
@@ -273,6 +276,7 @@ contract Vault is
    */
   function _createOutputCommitments(Transaction calldata transaction) internal {
     State storage $ = _getStorage();
+    address from = _msgSender();
     for (uint256 i = 0; i < transaction.outputsOwners.length; i++) {
       OutputsOwners memory outputWitness = transaction.outputsOwners[i];
       address outputOwner = outputWitness.owner;
@@ -286,6 +290,7 @@ contract Vault is
         $.commitmentsMap[transaction.token][outputHash] = outputOwner;
         emit CommitmentCreated(outputOwner, transaction.token, outputHash, transaction.metadata[outputIndex]);
       }
+      emit ConfidentialSpend(from, outputOwner, transaction.token);
     }
   }
 
@@ -332,27 +337,34 @@ contract Vault is
 
     IERC20 t = IERC20(transaction.token);
 
+    address from = _msgSender();
+
     for (uint8 i = 0; i < transaction.publicOutputs.length; i++) {
       if (transaction.publicOutputs[i].amount > 0) {
         t.safeTransfer(transaction.publicOutputs[i].owner, transaction.publicOutputs[i].amount);
+        emit PublicSpend(
+          from,
+          transaction.publicOutputs[i].owner,
+          transaction.token,
+          transaction.publicOutputs[i].amount
+        );
       }
     }
     if (spendFee > 0) {
       t.safeTransfer(address($.manager), spendFee);
     }
-
-    emit Spend(_msgSender(), transaction.token, transaction.inputsPoseidonHashes, transaction.outputsPoseidonHashes);
   }
 
   function spend(Transaction calldata transaction, uint256[24] calldata proof) external nonReentrant whenNotPaused {
     _spend(transaction, proof);
   }
 
-  function spendAndCall(address to, Transaction calldata transaction, uint256[24] calldata proof, bytes calldata data)
-    external
-    nonReentrant
-    whenNotPaused
-  {
+  function spendAndCall(
+    address to,
+    Transaction calldata transaction,
+    uint256[24] calldata proof,
+    bytes calldata data
+  ) external nonReentrant whenNotPaused {
     _spend(transaction, proof);
     ICommitmentsRecipient(to).onCommitmentsReceived(_msgSender(), transaction, data);
   }
@@ -365,52 +377,6 @@ contract Vault is
     }
     $.commitmentsMap[token][poseidonHash] = to;
     emit CommitmentTransfer(commitmentOwner, to, token, poseidonHash);
-  }
-
-  /**
-   * @dev Removes commitment by providing amount and secret
-   */
-  function _redeemCommitment(address token, address commitmentOwner, WithdrawItem calldata item) internal {
-    uint256 poseidonHash = computePoseidonHash(item.amount, item.sValue);
-    State storage $ = _getStorage();
-
-    if ($.commitmentsMap[token][poseidonHash] != commitmentOwner) {
-      revert OnlyAssignedAddressCanWithdraw(token, poseidonHash, commitmentOwner);
-    }
-
-    delete $.commitmentsMap[token][poseidonHash];
-
-    emit CommitmentRemoved(commitmentOwner, token, poseidonHash);
-  }
-
-  function withdraw(address token, WithdrawItem[] calldata items, WithdrawRecipient[] calldata recipients)
-    external
-    nonReentrant
-    whenNotPaused
-  {
-    uint256 totalProvided = 0;
-    address commitmentOwner = _msgSender();
-    for (uint256 i = 0; i < items.length; i++) {
-      _redeemCommitment(token, commitmentOwner, items[i]);
-      totalProvided += items[i].amount;
-    }
-    uint240 totalRequested = 0;
-    for (uint256 i = 0; i < recipients.length; i++) {
-      totalRequested += recipients[i].amount;
-    }
-    State storage $ = _getStorage();
-    uint240 fee = $.manager.getFees(token).withdraw;
-    if (totalProvided != totalRequested + fee) {
-      revert UnequalTotalAmounts(totalProvided, totalRequested, fee);
-    }
-    IERC20 t = IERC20(token);
-    for (uint256 i = 0; i < recipients.length; i++) {
-      t.safeTransfer(recipients[i].recipient, recipients[i].amount);
-    }
-    if (fee > 0) {
-      t.safeTransfer(address($.manager), fee);
-    }
-    emit Withdraw(commitmentOwner, token, totalProvided);
   }
 
   function computePoseidonHash(uint256 amount, uint256 sValue) public pure returns (uint256) {

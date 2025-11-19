@@ -72,8 +72,8 @@ contract VaultSpend11Test is VaultTest, IVaultEvents {
     vm.expectEmit(true, true, false, true);
     emit CommitmentCreated(alice, address(mockToken), outputHash, "spend11_metadata");
 
-    vm.expectEmit(true, true, false, true);
-    emit Spend(alice, address(mockToken), transaction.inputsPoseidonHashes, transaction.outputsPoseidonHashes);
+    vm.expectEmit(true, true, true, false);
+    emit ConfidentialSpend(alice, alice, address(mockToken));
 
     // Execute the spend transaction
     vm.startPrank(alice);

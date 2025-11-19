@@ -29,16 +29,6 @@ struct Transaction {
   PublicOutput[] publicOutputs;
 }
 
-struct WithdrawItem {
-  uint240 amount;
-  uint256 sValue;
-}
-
-struct WithdrawRecipient {
-  address recipient;
-  uint240 amount;
-}
-
 struct PublicOutput {
   address owner;
   uint240 amount;
@@ -63,13 +53,13 @@ interface IVaultEvents {
    */
   event CommitmentTransfer(address indexed from, address indexed to, address indexed token, uint256 poseidonHash);
   /**
-   * @dev Emitted when `owner` spend a confidential amount of some `token`.
+   * @dev Emitted when `owner` spend a confidential amount of some `token` to `to` address
    */
-  event Spend(address indexed owner, address indexed token, uint256[] inputHashes, uint256[] outputHashes);
+  event ConfidentialSpend(address indexed from, address indexed to, address indexed token);
   /**
-   * @dev Emitted when `owner` withdraw `total` amounts of token from the vault.
+   * @dev Emitted when `owner` spend a public `amount` of some `token` to `to` address
    */
-  event Withdraw(address indexed user, address indexed token, uint256 indexed total);
+  event PublicSpend(address indexed from, address indexed to, address indexed token, uint240 amount);
 }
 
 interface IVault is IVaultEvents {
@@ -135,11 +125,6 @@ interface IVault is IVaultEvents {
   function transfer(address to, address token, uint256 poseidonHash) external;
 
   /**
-   * @dev Withdraw multiple commitments in a single transaction
-   */
-  function withdraw(address token, WithdrawItem[] calldata items, WithdrawRecipient[] calldata recipients) external;
-
-  /**
    * @dev Compute Poseidon hash of amount and sValue on-chain
    */
   function computePoseidonHash(uint256 amount, uint256 sValue) external pure returns (uint256);
@@ -180,5 +165,4 @@ interface IVaultErrors {
   error NoInputsProvided();
   error NoOutputsProvided();
   error OnlyAssignedAddressCanWithdraw(address token, uint256 poseidonHash, address caller);
-  error UnequalTotalAmounts(uint256 totalProvided, uint256 totalRequested, uint240 fee);
 }

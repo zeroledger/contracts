@@ -5,9 +5,8 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/U
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
-import {
-  AccessManagedUpgradeable
-} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
+import {AccessManagedUpgradeable} from
+  "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 
 // not upgradable contracts & interfaces
 
@@ -68,12 +67,10 @@ contract Vault is
     _disableInitializers();
   }
 
-  function initialize(
-    address verifiers,
-    address trustedForwarder,
-    address protocolManager,
-    address initialAuthority
-  ) public initializer {
+  function initialize(address verifiers, address trustedForwarder, address protocolManager, address initialAuthority)
+    public
+    initializer
+  {
     __UUPSUpgradeable_init();
     __ReentrancyGuard_init();
     __Pausable_init();
@@ -145,10 +142,11 @@ contract Vault is
     _unpause();
   }
 
-  function deposit(
-    DepositParams calldata depositParams,
-    uint256[24] calldata proof
-  ) external nonReentrant whenNotPaused {
+  function deposit(DepositParams calldata depositParams, uint256[24] calldata proof)
+    external
+    nonReentrant
+    whenNotPaused
+  {
     address from = _msgSender();
     State storage $ = _getStorage();
     uint240 depositFee = $.manager.getFees(depositParams.token).deposit;
@@ -230,10 +228,7 @@ contract Vault is
       if ($.commitmentsMap[token][poseidonHash] != address(0)) revert CommitmentAlreadyUsed(poseidonHash);
       $.commitmentsMap[token][poseidonHash] = depositCommitmentParams[i].owner;
       emit CommitmentCreated(
-        depositCommitmentParams[i].owner,
-        token,
-        poseidonHash,
-        depositCommitmentParams[i].metadata
+        depositCommitmentParams[i].owner, token, poseidonHash, depositCommitmentParams[i].metadata
       );
     }
   }
@@ -343,10 +338,7 @@ contract Vault is
       if (transaction.publicOutputs[i].amount > 0) {
         t.safeTransfer(transaction.publicOutputs[i].owner, transaction.publicOutputs[i].amount);
         emit PublicSpend(
-          from,
-          transaction.publicOutputs[i].owner,
-          transaction.token,
-          transaction.publicOutputs[i].amount
+          from, transaction.publicOutputs[i].owner, transaction.token, transaction.publicOutputs[i].amount
         );
       }
     }
@@ -359,12 +351,11 @@ contract Vault is
     _spend(transaction, proof);
   }
 
-  function spendAndCall(
-    address to,
-    Transaction calldata transaction,
-    uint256[24] calldata proof,
-    bytes calldata data
-  ) external nonReentrant whenNotPaused {
+  function spendAndCall(address to, Transaction calldata transaction, uint256[24] calldata proof, bytes calldata data)
+    external
+    nonReentrant
+    whenNotPaused
+  {
     _spend(transaction, proof);
     ICommitmentsRecipient(to).onCommitmentsReceived(_msgSender(), transaction, data);
   }

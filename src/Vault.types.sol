@@ -17,77 +17,108 @@ struct DepositParams {
 
 struct OutputsOwners {
   address owner;
+  bool track;
   uint8[] indexes;
 }
 
+struct PublicOutput {
+  uint240 amount;
+  bool track;
+  address owner;
+}
+
 struct Transaction {
-  address token;
   uint256[] inputsPoseidonHashes;
   uint256[] outputsPoseidonHashes;
+  address token;
   bytes[] metadata;
   OutputsOwners[] outputsOwners;
   PublicOutput[] publicOutputs;
 }
 
-struct PublicOutput {
-  address owner;
-  uint240 amount;
-}
-
+/// @title IVaultEvents
+/// @notice Events for the Vault contract
+/// @author Zeroledger
 interface IVaultEvents {
   /**
-   * @dev Emitted when `user` deposit `amount` `token` into vault
+   * @notice Emitted when `user` deposit `amount` `token` into vault
+   * @param user The address that deposited the tokens
+   * @param token The token that was deposited
+   * @param amount The amount that was deposited
    */
   event Deposit(address indexed user, address indexed token, uint256 indexed amount);
   /**
-   * @dev Emitted when commitment for `owner` with `poseidonHash` and `metadata` is created in scope of `token`
+   * @notice Emitted when commitment for `owner` with `poseidonHash` and `metadata` is created in scope of `token`
+   * @param owner The owner of the commitment
+   * @param token The token that the commitment is in scope of
+   * @param poseidonHash The poseidon hash of the commitment
+   * @param metadata The metadata of the commitment
    */
   event CommitmentCreated(address indexed owner, address indexed token, uint256 poseidonHash, bytes metadata);
   /**
-   * @dev Emitted when commitment for `owner` with `poseidonHash` and `metadata` is removed (deleted) in scope of
+   * @notice Emitted when commitment for `owner` with `poseidonHash` and `metadata` is removed (deleted) in scope of
    * `token`
+   * @param owner The owner of the commitment
+   * @param token The token that the commitment is in scope of
+   * @param poseidonHash The poseidon hash of the commitment
    */
   event CommitmentRemoved(address indexed owner, address indexed token, uint256 poseidonHash);
   /**
-   * @dev Emitted when `token` scoped `poseidonHash` commitment transferred from `from` address to `to` address
+   * @notice Emitted when `token` scoped `poseidonHash` commitment transferred from `from` address to `to` address
+   * @param from The address that transferred the commitment
+   * @param to The address that received the commitment
+   * @param token The token that was transferred
+   * @param poseidonHash The poseidon hash of the commitment that was transferred
    */
   event CommitmentTransfer(address indexed from, address indexed to, address indexed token, uint256 poseidonHash);
   /**
-   * @dev Emitted when `owner` spend a confidential amount of some `token` to `to` address
+   * @notice Emitted when `owner` spend a confidential amount of some `token` to `to` address
+   * @param from The address that spent the confidential amount
+   * @param to The address that received the confidential amount
+   * @param token The token that was spent
    */
   event ConfidentialSpend(address indexed from, address indexed to, address indexed token);
   /**
-   * @dev Emitted when `owner` spend a public `amount` of some `token` to `to` address
+   * @notice Emitted when `owner` spend a public `amount` of some `token` to `to` address
+   * @param from The address that spent the public amount
+   * @param to The address that received the public amount
+   * @param token The token that was spent
+   * @param amount The amount that was spent
    */
   event PublicSpend(address indexed from, address indexed to, address indexed token, uint240 amount);
 }
 
+/// @title IVault
+/// @notice Interface for the Vault contract
+/// @author Zeroledger
 interface IVault is IVaultEvents {
   /**
-   * @dev Returns whether any particular address is the trusted forwarder. Must has identical interface to
+   * @notice Returns whether any particular address is the trusted forwarder. Must has identical interface to
    * ERC2771Context.
+   * @param forwarder The address to check if it is the trusted forwarder
+   * @return isTrustedForwarder Whether the address is the trusted forwarder
    */
   function isTrustedForwarder(address forwarder) external view returns (bool);
 
   /**
-   * @dev Pause all whenNotPaused modified methods
+   * @notice Pause all whenNotPaused modified methods
    */
   function pause() external;
 
   /**
-   * @dev Unpause all whenNotPaused modified methods
+   * @notice Unpause all whenNotPaused modified methods
    */
   function unpause() external;
 
   /**
-   * @dev Deposit tokens with commitments and ZK proof validation
+   * @notice Deposit tokens with commitments and ZK proof validation
    * @param depositParams The deposit parameters including token, amount, and commitments
    * @param proof The ZK proof for the deposit
    */
   function deposit(DepositParams calldata depositParams, uint256[24] calldata proof) external;
 
   /**
-   * @dev Deposit tokens with commitments and ZK proof validation using ERC20 permit
+   * @notice Deposit tokens with commitments and ZK proof validation using ERC20 permit
    * @param depositParams The deposit parameters including token, amount, and commitments
    * @param proof The ZK proof for the deposit
    * @param deadline The deadline for the permit
@@ -105,56 +136,85 @@ interface IVault is IVaultEvents {
   ) external;
 
   /**
-   * @dev Spend commitments by creating new ones (supports multiple inputs and outputs)
+   * @notice Spend commitments by creating new ones (supports multiple inputs and outputs)
+   * @param transaction The transaction containing the commitments to spend
+   * @param proof The ZK proof for the spend
    */
   function spend(Transaction calldata transaction, uint256[24] calldata proof) external;
 
   /**
-   * @dev Spend commitments by creating new ones (supports multiple inputs and outputs)
+   * @notice Spend commitments by creating new ones (supports multiple inputs and outputs)
+   * @param transaction The transaction containing the commitments to spend
+   * @param proof The ZK proof for the spend
    */
-  function spendAndCall(address to, Transaction calldata transaction, uint256[24] calldata proof, bytes calldata data)
-    external;
+  function spendAndCall(
+    address to,
+    Transaction calldata transaction,
+    uint256[24] calldata proof,
+    bytes calldata data
+  ) external;
 
   /**
-   * @dev Moves commitments defined by `poseidonHashes` and `token` to `to` address
+   * @notice Moves commitments defined by `poseidonHashes` and `token` to `to` address
    * Important: transfer does not destroy the commitments, it only changes the owner and emits an CommitmentsTransfer
    * event.
    * CommitmentsTransfer does not carry metadata, so client will need to find a CommitmentCreated event for the
    * corresponding commitment to get the commitment metadata.
+   * @param to The address to move the commitments to
+   * @param token The token to move the commitments for
+   * @param poseidonHash The poseidon hash of the commitment to move
    */
   function transfer(address to, address token, uint256 poseidonHash) external;
 
   /**
-   * @dev Compute Poseidon hash of amount and sValue on-chain
+   * @notice Compute Poseidon hash of amount and sValue on-chain
+   * @param amount The amount to compute the poseidon hash for
+   * @param sValue The sValue to compute the poseidon hash for
+   * @return poseidonHash The poseidon hash of the amount and sValue
    */
   function computePoseidonHash(uint256 amount, uint256 sValue) external pure returns (uint256);
 
   /**
-   * @dev Get commitment details for a given token and poseidon hash
+   * @notice Get commitment details for a given token and poseidon hash
+   * @param token The token to get the commitment details for
+   * @param poseidonHash The poseidon hash of the commitment
+   * @return owner The owner of the commitment
    */
   function getCommitment(address token, uint256 poseidonHash) external view returns (address owner);
 
   /**
-   * @dev Returns address of current Trusted Forwarder contract
+   * @notice Returns the address of the Trusted Forwarder contract
+   * @return The address of the Trusted Forwarder contract
    */
   function getTrustedForwarder() external view returns (address);
 
   /**
-   * @dev Returns address of current ProtocolManager contract
+   * @notice Returns the address of the ProtocolManager contract
+   * @return The address of the ProtocolManager contract
    */
   function getManager() external view returns (address);
 
   /**
-   * @dev Returns address of Verifiers umbrella contract
+   * @notice Returns the address of the Verifiers umbrella contract
+   * @return The address of the Verifiers umbrella contract
    */
   function getVerifiers() external view returns (address);
 }
 
+/// @title ICommitmentsRecipient
+/// @notice Interface for contracts that receive commitments
+/// @author Zeroledger
 interface ICommitmentsRecipient {
+  /// @notice Called when commitments are received
+  /// @param from The address that sent the commitments
+  /// @param transaction The transaction containing the commitments
+  /// @param data Additional data sent with the transaction
   function onCommitmentsReceived(address from, Transaction calldata transaction, bytes calldata data) external;
 }
 
-// Custom errors for gas optimization
+/// @title IVaultErrors
+/// @notice Custom errors for gas optimization
+/// @author Zeroledger
 interface IVaultErrors {
   error PermitExpired();
   error AmountMustBeGreaterThanZero();
@@ -164,5 +224,5 @@ interface IVaultErrors {
   error InputCommitmentNotFound(uint256 poseidonHash);
   error NoInputsProvided();
   error NoOutputsProvided();
-  error OnlyAssignedAddressCanWithdraw(address token, uint256 poseidonHash, address caller);
+  error InvalidOwner(address token, uint256 poseidonHash, address caller);
 }

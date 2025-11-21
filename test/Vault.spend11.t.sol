@@ -32,7 +32,7 @@ contract VaultSpend11Test is VaultTest, IVaultEvents {
 
     // Create output owners array
     OutputsOwners[] memory outputsOwners = new OutputsOwners[](1);
-    outputsOwners[0] = OutputsOwners({owner: alice, indexes: new uint8[](1)});
+    outputsOwners[0] = OutputsOwners({owner: alice, track: true, indexes: new uint8[](1)});
     outputsOwners[0].indexes[0] = 0; // First output goes to Alice
 
     // Create public outputs array (empty for this test)

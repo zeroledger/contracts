@@ -16,6 +16,7 @@
       "error",
       12
     ],
+    "gas-indexed-events": "off",
     "constructor-syntax": "error",
     "func-visibility": [
       "error",

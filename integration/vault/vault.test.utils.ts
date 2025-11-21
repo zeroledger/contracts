@@ -410,6 +410,7 @@ export async function createSpendTransaction(
   const outputsOwners = [
     {
       owner: testData.user.address,
+      track: true,
       indexes: outputHashes.map((_, index) => index),
     } as OutputsOwnersStruct,
   ];
@@ -418,6 +419,7 @@ export async function createSpendTransaction(
   const publicOutputs = testData.publicOutputs.map((output) => ({
     owner: output.owner,
     amount: output.amount,
+    track: true,
   }));
 
   return {

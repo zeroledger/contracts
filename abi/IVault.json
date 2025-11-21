@@ -92,6 +92,31 @@
       {
         "indexed": true,
         "internalType": "address",
+        "name": "from",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "ConfidentialSpend",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
         "name": "user",
         "type": "address"
       },
@@ -117,7 +142,13 @@
       {
         "indexed": true,
         "internalType": "address",
-        "name": "owner",
+        "name": "from",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "to",
         "type": "address"
       },
       {
@@ -128,43 +159,12 @@
       },
       {
         "indexed": false,
-        "internalType": "uint256[]",
-        "name": "inputHashes",
-        "type": "uint256[]"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256[]",
-        "name": "outputHashes",
-        "type": "uint256[]"
+        "internalType": "uint240",
+        "name": "amount",
+        "type": "uint240"
       }
     ],
-    "name": "Spend",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "user",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "total",
-        "type": "uint256"
-      }
-    ],
-    "name": "Withdraw",
+    "name": "PublicSpend",
     "type": "event"
   },
   {
@@ -429,11 +429,6 @@
       {
         "components": [
           {
-            "internalType": "address",
-            "name": "token",
-            "type": "address"
-          },
-          {
             "internalType": "uint256[]",
             "name": "inputsPoseidonHashes",
             "type": "uint256[]"
@@ -442,6 +437,11 @@
             "internalType": "uint256[]",
             "name": "outputsPoseidonHashes",
             "type": "uint256[]"
+          },
+          {
+            "internalType": "address",
+            "name": "token",
+            "type": "address"
           },
           {
             "internalType": "bytes[]",
@@ -468,14 +468,14 @@
           {
             "components": [
               {
-                "internalType": "address",
-                "name": "owner",
-                "type": "address"
-              },
-              {
                 "internalType": "uint240",
                 "name": "amount",
                 "type": "uint240"
+              },
+              {
+                "internalType": "address",
+                "name": "owner",
+                "type": "address"
               }
             ],
             "internalType": "struct PublicOutput[]",
@@ -491,6 +491,11 @@
         "internalType": "uint256[24]",
         "name": "proof",
         "type": "uint256[24]"
+      },
+      {
+        "internalType": "bool",
+        "name": "silent",
+        "type": "bool"
       }
     ],
     "name": "spend",
@@ -508,11 +513,6 @@
       {
         "components": [
           {
-            "internalType": "address",
-            "name": "token",
-            "type": "address"
-          },
-          {
             "internalType": "uint256[]",
             "name": "inputsPoseidonHashes",
             "type": "uint256[]"
@@ -521,6 +521,11 @@
             "internalType": "uint256[]",
             "name": "outputsPoseidonHashes",
             "type": "uint256[]"
+          },
+          {
+            "internalType": "address",
+            "name": "token",
+            "type": "address"
           },
           {
             "internalType": "bytes[]",
@@ -547,14 +552,14 @@
           {
             "components": [
               {
-                "internalType": "address",
-                "name": "owner",
-                "type": "address"
-              },
-              {
                 "internalType": "uint240",
                 "name": "amount",
                 "type": "uint240"
+              },
+              {
+                "internalType": "address",
+                "name": "owner",
+                "type": "address"
               }
             ],
             "internalType": "struct PublicOutput[]",
@@ -608,53 +613,6 @@
   {
     "inputs": [],
     "name": "unpause",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      },
-      {
-        "components": [
-          {
-            "internalType": "uint240",
-            "name": "amount",
-            "type": "uint240"
-          },
-          {
-            "internalType": "uint256",
-            "name": "sValue",
-            "type": "uint256"
-          }
-        ],
-        "internalType": "struct WithdrawItem[]",
-        "name": "items",
-        "type": "tuple[]"
-      },
-      {
-        "components": [
-          {
-            "internalType": "address",
-            "name": "recipient",
-            "type": "address"
-          },
-          {
-            "internalType": "uint240",
-            "name": "amount",
-            "type": "uint240"
-          }
-        ],
-        "internalType": "struct WithdrawRecipient[]",
-        "name": "recipients",
-        "type": "tuple[]"
-      }
-    ],
-    "name": "withdraw",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

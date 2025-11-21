@@ -275,7 +275,7 @@ contract Vault is
   /**
    * @dev Create output commitments using indexes from output witnesses
    */
-  function _createOutputCommitments(Transaction calldata transaction) internal {
+  function _createOutputCommitments(Transaction calldata transaction, bool silent) internal {
     State storage $ = _getStorage();
     address from = _msgSender();
     for (uint256 i = 0; i < transaction.outputsOwners.length; i++) {
@@ -291,14 +291,14 @@ contract Vault is
         $.commitmentsMap[transaction.token][outputHash] = outputOwner;
         emit CommitmentCreated(outputOwner, transaction.token, outputHash, transaction.metadata[outputIndex]);
       }
-      if (outputWitness.track) {
+      if (!silent) {
         emit ConfidentialSpend(from, outputOwner, transaction.token);
       }
     }
   }
 
   // solhint-disable-next-line code-complexity
-  function _spend(Transaction calldata transaction, uint256[24] calldata proof) internal {
+  function _spend(Transaction calldata transaction, uint256[24] calldata proof, bool silent) internal {
     if (transaction.inputsPoseidonHashes.length == 0) revert NoInputsProvided();
     if (transaction.outputsPoseidonHashes.length == 0) revert NoOutputsProvided();
 
@@ -336,7 +336,7 @@ contract Vault is
 
     _deleteInputCommitments(transaction);
 
-    _createOutputCommitments(transaction);
+    _createOutputCommitments(transaction, silent);
 
     IERC20 t = IERC20(transaction.token);
 
@@ -345,7 +345,7 @@ contract Vault is
     for (uint8 i = 0; i < transaction.publicOutputs.length; i++) {
       if (transaction.publicOutputs[i].amount > 0) {
         t.safeTransfer(transaction.publicOutputs[i].owner, transaction.publicOutputs[i].amount);
-        if (transaction.publicOutputs[i].track) {
+        if (!silent) {
           emit PublicSpend(
             from,
             transaction.publicOutputs[i].owner,
@@ -360,8 +360,12 @@ contract Vault is
     }
   }
 
-  function spend(Transaction calldata transaction, uint256[24] calldata proof) external nonReentrant whenNotPaused {
-    _spend(transaction, proof);
+  function spend(
+    Transaction calldata transaction,
+    uint256[24] calldata proof,
+    bool silent
+  ) external nonReentrant whenNotPaused {
+    _spend(transaction, proof, silent);
   }
 
   function spendAndCall(
@@ -370,7 +374,7 @@ contract Vault is
     uint256[24] calldata proof,
     bytes calldata data
   ) external nonReentrant whenNotPaused {
-    _spend(transaction, proof);
+    _spend(transaction, proof, true);
     ICommitmentsRecipient(to).onCommitmentsReceived(_msgSender(), transaction, data);
   }
 

@@ -48,21 +48,6 @@
     "type": "error"
   },
   {
-    "inputs": [],
-    "name": "InvalidZKProof",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "NoInputsProvided",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "NoOutputsProvided",
-    "type": "error"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
@@ -80,33 +65,27 @@
         "type": "address"
       }
     ],
-    "name": "OnlyAssignedAddressCanWithdraw",
+    "name": "InvalidOwner",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidZKProof",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NoInputsProvided",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NoOutputsProvided",
     "type": "error"
   },
   {
     "inputs": [],
     "name": "PermitExpired",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "totalProvided",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "totalRequested",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint240",
-        "name": "fee",
-        "type": "uint240"
-      }
-    ],
-    "name": "UnequalTotalAmounts",
     "type": "error"
   }
 ]

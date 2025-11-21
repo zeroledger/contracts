@@ -17,13 +17,11 @@ struct DepositParams {
 
 struct OutputsOwners {
   address owner;
-  bool track;
   uint8[] indexes;
 }
 
 struct PublicOutput {
   uint240 amount;
-  bool track;
   address owner;
 }
 
@@ -136,16 +134,20 @@ interface IVault is IVaultEvents {
   ) external;
 
   /**
-   * @notice Spend commitments by creating new ones (supports multiple inputs and outputs)
+   * @notice Spend commitments by creating new ones.
    * @param transaction The transaction containing the commitments to spend
    * @param proof The ZK proof for the spend
+   * @param silent Whether to emit the PublicSpend and ConfidentialSpend events
    */
-  function spend(Transaction calldata transaction, uint256[24] calldata proof) external;
+  function spend(Transaction calldata transaction, uint256[24] calldata proof, bool silent) external;
 
   /**
-   * @notice Spend commitments by creating new ones (supports multiple inputs and outputs)
+   * @notice Spend commitments by creating new ones and call a contract with the data.
+   * Important: spendAndCall does not emit the PublicSpend and ConfidentialSpend events.
+   * @param to The address to call the recipient with
    * @param transaction The transaction containing the commitments to spend
    * @param proof The ZK proof for the spend
+   * @param data The data to call the recipient with
    */
   function spendAndCall(
     address to,

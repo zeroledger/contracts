@@ -85,7 +85,7 @@ describe("Vault Spend12 Tests", function () {
       );
 
       // Act
-      const tx = await vault.connect(testData.user).spend(transaction, calldata_proof);
+      const tx = await vault.connect(testData.user).spend(transaction, calldata_proof, false);
 
       const receipt = await tx.wait();
 

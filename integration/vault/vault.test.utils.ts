@@ -434,8 +434,8 @@ export async function createSpendTransaction(
 export function verifySpendEvents(receipt: any, inputHashes: string[], outputHashes: string[]) {
   expect(receipt?.logs).to.have.length.greaterThan(0);
 
-  // Check for Spend event
-  const transactionSpentEvent = receipt?.logs?.find((log: any) => log.fragment?.name === "Spend");
+  // Check for ConfidentialSpend event
+  const transactionSpentEvent = receipt?.logs?.find((log: any) => log.fragment?.name === "ConfidentialSpend");
   expect(transactionSpentEvent).to.not.be.undefined;
 
   const commitmentRemovedEvents = receipt?.logs?.filter((log: any) => log.fragment?.name === "CommitmentRemoved");

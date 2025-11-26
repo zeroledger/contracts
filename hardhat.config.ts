@@ -30,7 +30,7 @@ export default {
     strategyConfig: {
       create2: {
         // Salt created & imported after `npm run deploy:initial` execution
-        salt: "0x5f1063e70ecbd8200e3e2e867f60be32528625ab015e786d0abd2e448f8707b4",
+        salt: "0x5f1063e70ecbd8200e3e2e867f60be32528625ab01eca024bebd0d9b71e1813c",
       },
     },
   },

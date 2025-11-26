@@ -9,11 +9,6 @@
       {
         "components": [
           {
-            "internalType": "address",
-            "name": "token",
-            "type": "address"
-          },
-          {
             "internalType": "uint256[]",
             "name": "inputsPoseidonHashes",
             "type": "uint256[]"
@@ -22,6 +17,11 @@
             "internalType": "uint256[]",
             "name": "outputsPoseidonHashes",
             "type": "uint256[]"
+          },
+          {
+            "internalType": "address",
+            "name": "token",
+            "type": "address"
           },
           {
             "internalType": "bytes[]",
@@ -48,14 +48,14 @@
           {
             "components": [
               {
-                "internalType": "address",
-                "name": "owner",
-                "type": "address"
-              },
-              {
                 "internalType": "uint240",
                 "name": "amount",
                 "type": "uint240"
+              },
+              {
+                "internalType": "address",
+                "name": "owner",
+                "type": "address"
               }
             ],
             "internalType": "struct PublicOutput[]",

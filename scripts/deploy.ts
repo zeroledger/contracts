@@ -19,7 +19,7 @@ const trueOrThrow = (condition: boolean, message: string) => {
 function mkCreateXSalt(deployer: string) {
   const addr20 = getBytes(deployer); // 20 bytes
   const flag1 = getBytes("0x01"); // 1 byte
-  const rnd11 = getBytes(id("0x6bcb9c0530f1840208348d1976338991908baf65f737af8c94768960cd21590d"));
+  const rnd11 = getBytes(id("0x2b6f44762876d8a7f3b40e91989faf5c93d85303b1fe22be01b4d8e01e85c441"));
   const salt = concat([addr20, flag1, rnd11]).slice(0, 66); // 32 bytes hex
   return salt;
 }
